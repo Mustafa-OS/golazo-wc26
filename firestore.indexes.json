@@ -1,0 +1,21 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "slips",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "matchIds", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "day", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "groups",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "members", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
