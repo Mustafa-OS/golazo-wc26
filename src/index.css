@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: dark; }
+
+html, body, #root { height: 100%; }
+body {
+  margin: 0;
+  background: #070E1A;
+  color: #EaF1FB;
+  font-family: 'Hanken Grotesk', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  /* subtle pitch-stripe + glow atmosphere instead of flat navy */
+  background-image:
+    radial-gradient(120% 60% at 50% -10%, rgba(198,255,62,0.08), transparent 60%),
+    repeating-linear-gradient(180deg, rgba(255,255,255,0.012) 0 2px, transparent 2px 64px);
+}
+
+.font-display { font-family: 'Anton', sans-serif; letter-spacing: 0.01em; }
+
+/* hide scrollbars on the horizontal match rail */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+@keyframes popin {
+  0% { transform: translateY(8px) scale(0.98); opacity: 0; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+.animate-popin { animation: popin 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+
+@keyframes slideup {
+  0% { transform: translateY(100%); }
+  100% { transform: translateY(0); }
+}
+.animate-slideup { animation: slideup 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) both; }

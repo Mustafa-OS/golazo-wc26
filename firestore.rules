@@ -1,0 +1,43 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Matches + props are written ONLY by Cloud Functions; everyone can read.
+    match /matches/{matchId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+      match /props/{propId} {
+        allow read: if request.auth != null;
+        allow write: if false;
+      }
+    }
+
+    // A user can read/write only their own profile; points are server-set.
+    match /users/{uid} {
+      allow read: if request.auth != null;
+      allow create: if request.auth.uid == uid;
+      // block client tampering with points/streak — only functions touch those.
+      allow update: if request.auth.uid == uid
+                    && !request.resource.data.diff(resource.data).affectedKeys()
+                          .hasAny(['points', 'streak']);
+    }
+
+    // A slip belongs to its owner; can only be written before lock time.
+    match /slips/{slipId} {
+      allow read: if request.auth != null;
+      allow create, update: if request.auth.uid == request.resource.data.uid
+                            && request.resource.data.locked == false;
+    }
+
+    // Leaderboards: read-only to clients.
+    match /leaderboards/{id} { allow read: if request.auth != null; allow write: if false; }
+
+    // Groups: members can read; anyone signed in can create. Joining goes
+    // through the joinGroup callable (which validates the code).
+    match /groups/{gid} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+    }
+  }
+}

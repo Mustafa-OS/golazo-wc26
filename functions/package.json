@@ -1,0 +1,16 @@
+{
+  "name": "wc-props-functions",
+  "engines": { "node": "20" },
+  "main": "index.js",
+  "dependencies": {
+    "firebase-admin": "^12.1.0",
+    "firebase-functions": "^5.0.1"
+  },
+  "devDependencies": {
+    "esbuild": "^0.21.5"
+  },
+  "scripts": {
+    "build:engines": "esbuild ../src/lib/lineEngine.js --format=cjs --outfile=lineEngine.cjs && esbuild ../src/lib/scoringEngine.js --format=cjs --outfile=scoringEngine.cjs && esbuild apiFootball.js --format=cjs --outfile=apiFootball.cjs",
+    "deploy": "npm run build:engines && firebase deploy --only functions"
+  }
+}
