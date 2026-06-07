@@ -27,8 +27,11 @@ export default function Today({ matches, pickFor, onPick, max, count, locked }) 
 
   const matchStarted = match && Date.now() >= new Date(match.kickoff).getTime();
   const propsLocked = locked || matchStarted;
+  const atCap = count >= max;
 
-  // One card per player: group this match's props by player (preserving order).
+  // One card per player: group this match's props by player, then surface the
+  // most interesting props first (attackers before keepers).
+  const POS_ORDER = { F: 0, M: 1, D: 2, G: 3 };
   const players = useMemo(() => {
     const byId = new Map();
     for (const p of match.props) {
@@ -43,7 +46,11 @@ export default function Today({ matches, pickFor, onPick, max, count, locked }) 
       }
       byId.get(p.playerId).props.push(p);
     }
-    return [...byId.values()];
+    // Stable sort by position priority (keeps home-then-away within a position).
+    return [...byId.values()]
+      .map((pl, i) => ({ pl, i }))
+      .sort((a, b) => (POS_ORDER[a.pl.position] - POS_ORDER[b.pl.position]) || (a.i - b.i))
+      .map(({ pl }) => pl);
   }, [match]);
 
   const shown = posFilter === 'ALL' ? players : players.filter((pl) => pl.position === posFilter);
@@ -130,6 +137,7 @@ export default function Today({ matches, pickFor, onPick, max, count, locked }) 
             pickFor={pickFor}
             onPick={onPick}
             locked={propsLocked}
+            atCap={atCap}
           />
         ))}
       </div>

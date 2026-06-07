@@ -6,7 +6,7 @@ const POS_LABEL = { G: 'GK', D: 'DEF', M: 'MID', F: 'FWD' };
 // One card per PLAYER. The player's props (one per metric) are selectable via
 // chips; the line / MORE / LESS / model% all update for the chosen metric, and
 // a chip is dotted when that metric is already in the slip.
-export default function PropCard({ player, props, pickFor, onPick, locked }) {
+export default function PropCard({ player, props, pickFor, onPick, locked, atCap }) {
   const [metric, setMetric] = useState(props[0]?.metric);
 
   // If the prop set changes (e.g. live update), keep the selection valid.
@@ -22,6 +22,9 @@ export default function PropCard({ player, props, pickFor, onPick, locked }) {
   const moreChance = Math.round(sideProbability(active, 'MORE') * 100);
   const picked = pickFor(active.id);
   const pickedMetrics = props.filter((p) => pickFor(p.id)).length;
+  // At the 5-pick cap, only already-picked props stay tappable (so you can swap
+  // a side or drop one) — everything else is disabled so the cap is legible.
+  const sideDisabled = locked || (atCap && !picked);
 
   return (
     <div className="animate-popin rounded-2xl border border-line bg-panel p-3">
@@ -77,14 +80,14 @@ export default function PropCard({ player, props, pickFor, onPick, locked }) {
           side="MORE"
           pts={morePts}
           active={picked?.side === 'MORE'}
-          disabled={locked}
+          disabled={sideDisabled}
           onClick={() => onPick(active, 'MORE')}
         />
         <SideButton
           side="LESS"
           pts={lessPts}
           active={picked?.side === 'LESS'}
-          disabled={locked}
+          disabled={sideDisabled}
           onClick={() => onPick(active, 'LESS')}
         />
       </div>
