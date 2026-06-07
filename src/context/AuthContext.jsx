@@ -11,9 +11,8 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { MOCK_MODE, EMULATOR_MODE, auth, db } from '../firebase.js';
+import { ALLOWED_EMAIL_DOMAIN } from '../config.js';
 import * as mock from '../lib/mockAuth.js';
-
-const IMPERIAL_DOMAIN = '@imperial.ac.uk';
 
 export const MODE = MOCK_MODE ? 'mock' : EMULATOR_MODE ? 'emulator' : 'live';
 
@@ -34,8 +33,10 @@ function friendly(code) {
   return map[code] || 'Something went wrong. Please try again.';
 }
 
-function isImperial(email) {
-  return email.trim().toLowerCase().endsWith(IMPERIAL_DOMAIN);
+// When ALLOWED_EMAIL_DOMAIN is null the app is open to any email.
+function isAllowedEmail(email) {
+  if (!ALLOWED_EMAIL_DOMAIN) return true;
+  return email.trim().toLowerCase().endsWith(ALLOWED_EMAIL_DOMAIN);
 }
 
 export function AuthProvider({ children }) {
@@ -90,8 +91,8 @@ export function AuthProvider({ children }) {
   // ---- actions --------------------------------------------------------------
   const signUp = useCallback(async (email, password) => {
     setError('');
-    if (!isImperial(email)) {
-      setError(`Use your Imperial email (${IMPERIAL_DOMAIN}).`);
+    if (!isAllowedEmail(email)) {
+      setError(`Use your Imperial email (${ALLOWED_EMAIL_DOMAIN}).`);
       return false;
     }
     if (!password || password.length < 6) { setError(friendly('auth/weak-password')); return false; }
