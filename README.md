@@ -5,8 +5,11 @@ Imperial College. Browse a match, tap **MORE** or **LESS** on app-set lines, loc
 your best **5 picks** a day, climb the all-Imperial leaderboard or a private group.
 **No betting** — just points and bragging rights.
 
-> Kickoff is **11 June 2026**. This repo is the working scaffold: the hard logic
-> is done, the UI runs today on mock data, and the steps below take it live.
+> Kickoff is **11 June 2026**. The UI, engines, auth, live Firestore wiring, slips,
+> leaderboards and groups are all built and tested. What's left is *yours*: create a
+> Firebase project and an API-Football account, then flip the switches in §4.
+
+**▶ Live demo (mock data):** https://mustafa-os.github.io/over-wc26/
 
 ---
 
@@ -19,8 +22,8 @@ npm run dev
 
 Open the local URL. With no `.env`, the app runs in **MOCK_MODE** on sample
 fixtures (England v Croatia, Argentina v Algeria) so you can see and feel the whole
-game — match rail, props, the More/Less mechanic, the slip, the leaderboard — before
-any backend exists.
+game — sign-up, the match rail, props, the More/Less mechanic, the slip, leaderboard,
+groups — before any backend exists. There's a one-tap **"Try the demo"** button too.
 
 ---
 
@@ -39,15 +42,15 @@ picks score **0** (never negative). A daily streak adds up to **+50%**.
 
 Both engines are plain dependency-free JS, imported by **both** the frontend (to
 preview points) and the Cloud Functions (to award them) — so they can never disagree.
+`npm test` runs 21 assertions over them.
 
 ---
 
 ## 3. The architecture that makes it scale
 
-**Users never call the football API.** That's the whole trick. Scheduled Cloud
-Functions hit API-Football a few times a day and cache everything in Firestore;
-every student reads from Firestore (huge free tier). 10 players or 1,000 — your API
-usage is identical.
+**Users never call the football API.** Scheduled Cloud Functions hit API-Football a
+few times a day and cache everything in Firestore; every student reads from Firestore
+(huge free tier). 10 players or 1,000 — your API usage is identical.
 
 ```
                  (scheduled, ~hourly)
@@ -55,28 +58,42 @@ usage is identical.
    fixtures                                generate props          (matches,
    lineups                                 resolve & score          props,
    player stats                            roll leaderboard         users, slips,
-                                                                    leaderboards)
+                                                                    leaderboards, groups)
                                                                         │
                                                   all users read  ◀─────┘
 ```
 
 - `generateDailyProps` (08:00): fixtures + lineups → write today's props
-- `resolveFinished` (hourly): finished matches → player stats → settle every slip
+- `resolveFinished` (hourly): finished matches → player stats → settle every slip, award points, roll streaks
 - `recomputeLeaderboard` (hourly): roll user totals into the boards
 - `joinGroup` (callable): add caller to a group by code
 
+### Three run modes (`src/firebase.js`)
+
+| Mode | Trigger | Backend |
+|------|---------|---------|
+| **MOCK** | no `.env` | runs entirely on `mockData.js` (default `npm run dev`) |
+| **EMULATOR** | `VITE_FB_EMULATOR=1` | real Firebase SDK → local Emulator Suite |
+| **LIVE** | `VITE_FB_API_KEY` set | your real Firebase project |
+
+Every page is backend-agnostic via `AuthContext` / `DataContext` and the
+`slipStore` / `groupStore` modules — the same UI runs on mock, emulator, or live.
+
 ---
 
-## 4. Taking it live
+## 4. Taking it live  ⬅ this is the part only you can do
 
-### a) Firebase
+### a) Firebase  *(blocks Auth, live data, slips, leaderboards, groups)*
 1. Create a project at <https://console.firebase.google.com>.
 2. Enable **Authentication** (Email/Password) and **Firestore**.
 3. Copy your web config into `.env` (see `.env.example`). The app leaves MOCK_MODE
    automatically once `VITE_FB_API_KEY` is set.
-4. Deploy the security rules: `firebase deploy --only firestore:rules`.
+4. `firebase use --add` (writes `.firebaserc`), then deploy rules + indexes:
+   ```bash
+   firebase deploy --only firestore:rules,firestore:indexes
+   ```
 
-### b) API-Football
+### b) API-Football  *(blocks prop generation + resolution)*
 1. Sign up at <https://www.api-football.com>. **Free tier** (100 req/day, no live
    data) is fine for wiring everything up now.
 2. **Before 11 June, upgrade to Pro ($19/mo)** for live data + player stats. That
@@ -87,8 +104,8 @@ usage is identical.
    ```
 
 ### c) Functions
-The engines are ES modules; the functions runtime here uses `require`. A one-line
-esbuild step converts them to `.cjs` next to `index.js`:
+The engines are ES modules; the functions runtime uses `require`. An esbuild step
+converts them to `.cjs` next to `index.js` (wired into `predeploy`):
 ```bash
 cd functions && npm install && npm run deploy   # builds engines + deploys
 ```
@@ -96,36 +113,37 @@ cd functions && npm install && npm run deploy   # builds engines + deploys
 ### d) Frontend hosting
 ```bash
 npm run build
-# then either:
-firebase deploy --only hosting      # Firebase Hosting
-# or import the repo to Vercel for auto-deploys on push
+firebase deploy --only hosting        # Firebase Hosting (firebase.json -> dist, SPA rewrite)
 ```
+A MOCK_MODE demo also auto-deploys to **GitHub Pages** on every push to `main`
+(`.github/workflows/deploy.yml`). To make that demo *live*, add your `VITE_FB_*`
+values as repo secrets and pass them to the build step.
 
 ---
 
-## 5. Suggested Claude Code build order
+## 5. Local development against the emulator (no cloud needed)
 
-The UI + engines are done. Wire the live pieces in this order — each is a clean,
-self-contained prompt for Claude Code:
+Test the full live code path — real Auth, Firestore reads/writes, security rules,
+and the `joinGroup` callable — entirely offline (needs Java for the Firestore emulator):
 
-1. **Auth** — "Add Firebase email/password auth with an Imperial email check
-   (`@imperial.ac.uk`), a name + department onboarding step, and write the user doc."
-2. **Read props from Firestore** — "Replace `mockData` in `App.jsx` with a Firestore
-   subscription to `matches` and `matches/{id}/props`; keep the same shapes."
-3. **Persist slips** — "On Lock Slip, write a `slips` doc `{uid, matchIds, picks, locked, day}`;
-   block writes after first kickoff (client + the existing security rule)."
-4. **Live leaderboards** — "Subscribe `LeaderboardPage` to `leaderboards/imperial`
-   and to group boards; remove the mock rows."
-5. **Groups** — "Wire create-group (write a `groups` doc with a random code) and the
-   join button to the `joinGroup` callable."
-6. **Deploy functions + test** on the API-Football free tier with a past fixture, then
-   flip to Pro before the 11th.
+```bash
+# terminal 1 — emulators (auth, firestore, functions)
+cd functions && npm install && npm run build:engines && cd ..
+firebase emulators:start --only auth,firestore,functions --project demo-over-wc26
 
-### Going-viral checklist for Imperial
-- Friendly name + a QR code to the deployed URL for stories / group chats / society
-  Slacks. Seed a few halls/course groups so new joiners land somewhere active.
-- A "share my slip" image (export the slip as PNG) is a strong growth hook if you have
-  time after the core loop.
+# terminal 2 — seed sample matches/props/leaderboard/groups, then run the app
+npm run seed
+npm run dev:emulator        # http://localhost:5174  (VITE_FB_EMULATOR=1)
+```
+
+## 6. Tests
+
+```bash
+npm test     # engine unit tests (lineEngine + scoringEngine), 21 assertions
+```
+
+The build was also verified headlessly during development: full mock UI flow,
+the live emulator UI flow, a security-rules suite, and the groups/callable suite.
 
 ---
 
@@ -136,13 +154,20 @@ src/
   lib/lineEngine.js       line generation (positions, baselines, half-lines)
   lib/scoringEngine.js    risk-weighted points + slip settlement (Poisson)
   lib/mockData.js         sample fixtures/squads for MOCK_MODE
-  firebase.js             guarded init (MOCK_MODE when no env)
-  App.jsx                 shell: state, slip, nav
-  components/PropCard.jsx the More/Less selector
-  components/PickSlip.jsx the bottom-sheet slip
-  pages/                  Today, Leaderboard, Groups, Profile
+  lib/mockAuth.js         localStorage auth stand-in for MOCK_MODE
+  lib/slipStore.js        slip persistence (mock + Firestore)
+  lib/groupStore.js       groups (mock + Firestore + joinGroup callable)
+  firebase.js             guarded init (MOCK / EMULATOR / LIVE)
+  context/AuthContext.jsx auth state machine over both backends
+  context/DataContext.jsx matches + props + leaderboard subscriptions
+  App.jsx                 shell: auth gate, slip state, lock-at-kickoff, nav
+  components/             PropCard (More/Less), PickSlip (slip + results + share)
+  pages/                  AuthScreen, Onboarding, Today, Leaderboard, Groups, Profile
 functions/
-  index.js                scheduled jobs + joinGroup
+  index.js                scheduled jobs + joinGroup callable
   apiFootball.js          API-Football client (server-side only)
-firestore.rules           locks points/props to server writes
+firestore.rules           server-only matches/props, protected points, owner-only
+                          slips (locked = one-way latch), member-read groups
+firebase.json             rules + indexes + functions + hosting + emulator config
+scripts/                  seed.mjs (emulator seed), test-engines.mjs (npm test)
 ```
