@@ -6,7 +6,7 @@ export default function Profile({ rows }) {
   const [copied, setCopied] = useState(false);
 
   async function shareApp() {
-    const url = window.location.origin;
+    const url = window.location.origin + window.location.pathname;
     const text = "I'm playing OVER. — Imperial's World Cup 2026 props game. No betting, just bragging rights. Get on:";
     try {
       if (navigator.share) {

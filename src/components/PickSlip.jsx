@@ -7,7 +7,7 @@ export default function PickSlip({ picks, max, locked, onRemove, onLock, onClose
   const scored = picks.reduce((s, p) => s + (p.awarded ?? 0), 0);
 
   async function shareSlip() {
-    const url = window.location.origin;
+    const url = window.location.origin + window.location.pathname;
     const lines = picks.map(
       (p) => `${p.side === 'MORE' ? '▲' : '▼'} ${p.playerName} ${p.side} ${p.label} ${p.line}`
     );
