@@ -87,19 +87,29 @@ exports.resolveFinished = onSchedule(
       for (const slipDoc of slips.docs) {
         const slip = slipDoc.data();
         const picksForMatch = slip.picks.filter((p) => p.matchId === fx.id);
-        const { results, total } = settleSlip(picksForMatch, statsByPlayer, slip.streak || 0);
 
-        writes.update(slipDoc.ref, {
-          picks: slip.picks.map((p) =>
-            p.matchId === fx.id ? results.find((r) => r.id === p.id) || p : p
-          ),
-        });
-        // Increment the user's running total.
-        writes.set(
-          db.doc(`users/${slip.uid}`),
-          { points: FieldValue.increment(total) },
-          { merge: true }
+        // The user's streak coming into today drives the bonus and the next value.
+        const userRef = db.doc(`users/${slip.uid}`);
+        const priorStreak = (await userRef.get()).get('streak') || 0;
+
+        const { results, total } = settleSlip(picksForMatch, statsByPlayer, priorStreak);
+
+        const mergedPicks = slip.picks.map((p) =>
+          p.matchId === fx.id ? results.find((r) => r.id === p.id) || p : p
         );
+        const slipUpdate = { picks: mergedPicks };
+
+        // One write per doc per batch: fold points + (maybe) streak together.
+        const userUpdate = { points: FieldValue.increment(total) };
+        const fullySettled = mergedPicks.every((p) => p.correct !== undefined);
+        if (fullySettled && !slip.streakApplied) {
+          const correctCount = mergedPicks.filter((p) => p.correct).length;
+          userUpdate.streak = correctCount > 0 ? priorStreak + 1 : 0; // daily streak roll
+          slipUpdate.streakApplied = true;
+        }
+
+        writes.set(userRef, userUpdate, { merge: true });
+        writes.update(slipDoc.ref, slipUpdate);
       }
       writes.update(matchRef, { settled: true });
       await writes.commit();
