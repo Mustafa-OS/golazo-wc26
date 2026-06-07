@@ -45,13 +45,21 @@ exports.generateDailyProps = onSchedule(
     const batch = db.batch();
 
     for (const fx of fixtures) {
-      const lineups = await api.getLineups(key, fx.id); // { teamId: {name, players} }
+      // Build from full squads (available all day) rather than lineups (which
+      // only land ~1h before kickoff). Players who don't play are voided at
+      // resolution by the MIN_MINUTES rule in the scoring engine.
+      const [homeSquad, awaySquad] = await Promise.all([
+        api.getSquad(key, fx.home.code),
+        api.getSquad(key, fx.away.code),
+      ]);
+      const withTeam = (players, team) =>
+        players.map((p) => ({ ...p, team: team.name, teamCode: team.code }));
       const match = {
         id: fx.id,
         kickoff: fx.kickoff,
         stage: fx.stage,
-        home: { ...fx.home, players: lineups[fx.home.code]?.players || [] },
-        away: { ...fx.away, players: lineups[fx.away.code]?.players || [] },
+        home: { ...fx.home, players: withTeam(homeSquad, fx.home) },
+        away: { ...fx.away, players: withTeam(awaySquad, fx.away) },
       };
       // Match doc (for the UI) ...
       batch.set(db.doc(`matches/${fx.id}`), match, { merge: true });

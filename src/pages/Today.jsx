@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import PropCard from '../components/PropCard.jsx';
 
 function kickoffLabel(iso) {
@@ -20,10 +20,19 @@ function relKickoff(iso) {
 export default function Today({ matches, pickFor, onPick, max, count, locked }) {
   const [activeId, setActiveId] = useState(matches[0]?.id);
   const [posFilter, setPosFilter] = useState('ALL');
+  const [teamFilter, setTeamFilter] = useState('ALL');
   const match = matches.find((m) => m.id === activeId) || matches[0];
+
+  // Team codes are match-specific, so reset the team filter when the match changes.
+  useEffect(() => setTeamFilter('ALL'), [activeId]);
 
   const FILTERS = ['ALL', 'F', 'M', 'D', 'G'];
   const FILTER_LABEL = { ALL: 'All', F: 'FWD', M: 'MID', D: 'DEF', G: 'GK' };
+  const TEAMS = [
+    { id: 'ALL', label: 'Both', flag: '' },
+    { id: match.home.code, label: match.home.code, flag: match.home.flag },
+    { id: match.away.code, label: match.away.code, flag: match.away.flag },
+  ];
 
   const matchStarted = match && Date.now() >= new Date(match.kickoff).getTime();
   const propsLocked = locked || matchStarted;
@@ -53,7 +62,11 @@ export default function Today({ matches, pickFor, onPick, max, count, locked }) 
       .map(({ pl }) => pl);
   }, [match]);
 
-  const shown = posFilter === 'ALL' ? players : players.filter((pl) => pl.position === posFilter);
+  const shown = players.filter(
+    (pl) =>
+      (posFilter === 'ALL' || pl.position === posFilter) &&
+      (teamFilter === 'ALL' || pl.teamCode === teamFilter)
+  );
 
   return (
     <div>
@@ -105,8 +118,25 @@ export default function Today({ matches, pickFor, onPick, max, count, locked }) 
         </div>
       )}
 
-      {/* position filter */}
+      {/* team filter */}
       <div className="no-scrollbar -mx-4 mt-3 flex gap-2 overflow-x-auto px-4">
+        {TEAMS.map((t) => (
+          <button
+            key={t.id}
+            aria-label={`team-${t.id}`}
+            onClick={() => setTeamFilter(t.id)}
+            className={`flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold uppercase tracking-wide transition ${
+              teamFilter === t.id ? 'bg-more text-ink' : 'border border-line bg-panel text-mist'
+            }`}
+          >
+            {t.flag && <span className="text-sm">{t.flag}</span>}
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* position filter */}
+      <div className="no-scrollbar -mx-4 mt-2 flex gap-2 overflow-x-auto px-4">
         {FILTERS.map((f) => (
           <button
             key={f}

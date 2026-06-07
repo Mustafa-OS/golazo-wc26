@@ -19,10 +19,12 @@ const BASE = 'https://v3.football.api-sports.io';
 const LEAGUE_WORLD_CUP = 1;
 const SEASON = 2026;
 
-// Map API-Football's position strings to our G/D/M/F buckets.
+// Map API-Football's position strings to our G/D/M/F buckets. The squads
+// endpoint says "Attacker" (A); lineups say "F" — fold both to F.
 function mapPosition(apiPos) {
   if (!apiPos) return 'M';
   const p = apiPos[0].toUpperCase();
+  if (p === 'A') return 'F';
   return ['G', 'D', 'M', 'F'].includes(p) ? p : 'M';
 }
 
@@ -50,6 +52,22 @@ export async function getFixtures(apiKey, date) {
     stage: r.league.round,
     home: { name: r.teams.home.name, code: r.teams.home.id, flag: r.teams.home.logo },
     away: { name: r.teams.away.name, code: r.teams.away.id, flag: r.teams.away.logo },
+  }));
+}
+
+/**
+ * Full squad for a team, with our position buckets. Unlike lineups (which only
+ * appear ~1h before kickoff), squads are available all day — so props can be
+ * generated at 08:00. Players who don't actually play are voided at resolution
+ * (see scoringEngine MIN_MINUTES).
+ */
+export async function getSquad(apiKey, teamId) {
+  const rows = await call('/players/squads', { team: teamId }, apiKey);
+  const players = rows[0]?.players || [];
+  return players.map((p) => ({
+    id: String(p.id),
+    name: p.name,
+    position: mapPosition(p.position),
   }));
 }
 
@@ -82,6 +100,7 @@ export function normalisePlayerStats(apiResponse) {
     for (const entry of side.players) {
       const s = entry.statistics?.[0] || {};
       byPlayer[String(entry.player.id)] = {
+        minutes: s.games?.minutes ?? 0, // drives DNP voiding at resolution
         goals: s.goals?.total ?? 0,
         assists: s.goals?.assists ?? 0,
         saves: s.goals?.saves ?? 0,

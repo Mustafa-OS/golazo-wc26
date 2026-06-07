@@ -62,13 +62,19 @@ export default function PickSlip({ picks, max, locked, onRemove, onLock, onClose
                 <div
                   key={p.id}
                   className={`flex items-center justify-between rounded-xl border bg-panel2 px-3 py-2.5 ${
-                    isSettled ? (p.correct ? 'border-more/50' : 'border-less/40 opacity-70') : 'border-line'
+                    isSettled
+                      ? p.void
+                        ? 'border-line opacity-60'
+                        : p.correct
+                          ? 'border-more/50'
+                          : 'border-less/40 opacity-70'
+                      : 'border-line'
                   }`}
                 >
                   <div className="flex items-center gap-2.5 leading-tight">
                     {isSettled && (
-                      <span className={`text-lg ${p.correct ? 'text-more' : 'text-less'}`}>
-                        {p.correct ? '✓' : '✗'}
+                      <span className={`text-lg ${p.void ? 'text-mist' : p.correct ? 'text-more' : 'text-less'}`}>
+                        {p.void ? '—' : p.correct ? '✓' : '✗'}
                       </span>
                     )}
                     <div>
@@ -83,9 +89,15 @@ export default function PickSlip({ picks, max, locked, onRemove, onLock, onClose
                   </div>
                   <div className="flex items-center gap-3">
                     {isSettled ? (
-                      <span className={`font-display text-lg ${p.correct ? 'text-more' : 'text-mist'}`}>
-                        +{p.awarded ?? 0}
-                      </span>
+                      p.void ? (
+                        <span className="rounded bg-panel px-1.5 py-0.5 text-[10px] font-bold uppercase text-mist">
+                          Void · didn’t play
+                        </span>
+                      ) : (
+                        <span className={`font-display text-lg ${p.correct ? 'text-more' : 'text-mist'}`}>
+                          +{p.awarded ?? 0}
+                        </span>
+                      )
                     ) : (
                       <>
                         <span className="font-display text-lg text-gold">+{p.value}</span>

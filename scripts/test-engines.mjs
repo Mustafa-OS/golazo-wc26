@@ -48,10 +48,17 @@ try {
 
   // --- resolvePick ---------------------------------------------------------
   const pick = { ...goalsProp, id: 'p', playerId: 's1', matchId: 'm1', side: 'MORE', value: more };
-  eq('MORE goals correct when player scored 1', resolvePick(pick, { goals: 1 }).correct, true);
-  eq('MORE goals wrong when player blanked', resolvePick(pick, { goals: 0 }).correct, false);
-  eq('wrong pick awards 0 (never negative)', resolvePick(pick, { goals: 0 }).awarded, 0);
-  eq('correct pick awards its frozen value', resolvePick(pick, { goals: 1 }).awarded, more);
+  const played = (extra) => ({ minutes: 90, ...extra });
+  eq('MORE goals correct when player scored 1', resolvePick(pick, played({ goals: 1 })).correct, true);
+  eq('MORE goals wrong when player blanked', resolvePick(pick, played({ goals: 0 })).correct, false);
+  eq('wrong pick awards 0 (never negative)', resolvePick(pick, played({ goals: 0 })).awarded, 0);
+  eq('correct pick awards its frozen value', resolvePick(pick, played({ goals: 1 })).awarded, more);
+
+  // --- DNP / minimum-minutes voiding --------------------------------------
+  ok('pick voids when player has no minutes', resolvePick(pick, { goals: 1 }).void === true);
+  ok('voided pick awards 0', resolvePick(pick, { minutes: 0, goals: 5 }).awarded === 0);
+  ok('voided pick is not counted correct', resolvePick(pick, { minutes: 0, goals: 5 }).correct === false);
+  ok('played pick is not voided', !resolvePick(pick, played({ goals: 1 })).void);
 
   // --- streak multiplier ---------------------------------------------------
   eq('no streak = no bonus', applyStreak(100, 0), 100);
@@ -60,12 +67,18 @@ try {
 
   // --- settleSlip ----------------------------------------------------------
   const lessPick = { ...buildLine(striker, 'shotsOn'), id: 'p2', playerId: 's1', matchId: 'm1', side: 'LESS', value: 5 };
-  const settled = settleSlip([pick, lessPick], { s1: { goals: 1, shotsOn: 0 } }, 0);
+  const settled = settleSlip([pick, lessPick], { s1: played({ goals: 1, shotsOn: 0 }) }, 0);
   eq('settleSlip counts correct picks', settled.correctCount, 2);
   ok('settleSlip totals base points', settled.basePoints === more + 5);
   eq('settleSlip advances the streak on a hit', settled.newStreak, 1);
-  const blank = settleSlip([pick], { s1: { goals: 0 } }, 3);
+  const blank = settleSlip([pick], { s1: played({ goals: 0 }) }, 3);
   eq('settleSlip resets streak when nothing lands', blank.newStreak, 0);
+
+  // A DNP pick in a slip is voided, not scored or counted.
+  const voided = settleSlip([pick], { s1: { goals: 2 } }, 0); // no minutes -> void
+  eq('voided pick scores 0 in a slip', voided.basePoints, 0);
+  eq('voided pick is not counted correct', voided.correctCount, 0);
+  ok('voided pick is flagged in results', voided.results[0].void === true);
 
   console.log(`\nENGINE TESTS PASSED — ${passed} assertions.`);
   process.exit(0);

@@ -16,6 +16,11 @@ const MIN_POINTS = 5;     // floor for a near-certain pick
 const MAX_POINTS = 100;   // cap so one lucky longshot can't run away with it
 const STREAK_STEP = 0.05; // +5% per consecutive correct day
 const STREAK_CAP = 0.5;   // max +50% from streaks
+// Props are generated for the full squad, so a picked player might not play.
+// Below this many minutes the pick is VOID (no points, no penalty, no streak
+// effect) — the standard DFS "Did Not Play" rule. Raise toward 20–60 to also
+// void brief cameo subs on volume stats.
+const MIN_MINUTES = 1;
 
 // Poisson P(X >= k) — probability of AT LEAST k events given mean lambda.
 // Count stats (goals, shots, saves...) are well-approximated by Poisson.
@@ -64,6 +69,11 @@ export function pickValue(prop, side) {
  * @returns {object} { correct, awarded }
  */
 export function resolvePick(pick, actual) {
+  // Did Not Play (or under the minutes threshold) -> VOID: no points, no penalty,
+  // and it doesn't count toward correct picks or the streak.
+  const minutes = actual?.minutes ?? 0;
+  if (minutes < MIN_MINUTES) return { correct: false, awarded: 0, void: true };
+
   const got = actual?.[pick.metric] ?? 0;
   const landedMore = got >= Math.ceil(pick.line);
   const correct = pick.side === 'MORE' ? landedMore : !landedMore;
