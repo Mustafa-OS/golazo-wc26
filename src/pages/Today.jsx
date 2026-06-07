@@ -6,13 +6,16 @@ function kickoffLabel(iso) {
   return d.toLocaleString('en-GB', { weekday: 'short', hour: '2-digit', minute: '2-digit' });
 }
 
-export default function Today({ matches, pickFor, onPick, max, count }) {
+export default function Today({ matches, pickFor, onPick, max, count, locked }) {
   const [activeId, setActiveId] = useState(matches[0]?.id);
   const [posFilter, setPosFilter] = useState('ALL');
   const match = matches.find((m) => m.id === activeId) || matches[0];
 
   const FILTERS = ['ALL', 'F', 'M', 'D', 'G'];
   const FILTER_LABEL = { ALL: 'All', F: 'FWD', M: 'MID', D: 'DEF', G: 'GK' };
+
+  const matchStarted = match && Date.now() >= new Date(match.kickoff).getTime();
+  const propsLocked = locked || matchStarted;
 
   const props =
     posFilter === 'ALL' ? match.props : match.props.filter((p) => p.position === posFilter);
@@ -44,14 +47,21 @@ export default function Today({ matches, pickFor, onPick, max, count }) {
         ))}
       </div>
 
-      {/* cap nudge */}
-      <div className="mt-2 flex items-center justify-between rounded-xl border border-line bg-panel px-3 py-2">
-        <span className="text-xs font-semibold text-mist">
-          Tap <span className="text-more">MORE</span> or <span className="text-less">LESS</span>. Best{' '}
-          <span className="text-white">{max}</span> lock at kickoff.
-        </span>
-        <span className="font-display text-lg text-gold">{count}/{max}</span>
-      </div>
+      {/* cap nudge / locked banner */}
+      {locked ? (
+        <div className="mt-2 flex items-center justify-between rounded-xl border border-gold/40 bg-gold/10 px-3 py-2">
+          <span className="text-xs font-bold text-gold">🔒 Slip locked in — no more edits.</span>
+          <span className="font-display text-lg text-gold">{count}/{max}</span>
+        </div>
+      ) : (
+        <div className="mt-2 flex items-center justify-between rounded-xl border border-line bg-panel px-3 py-2">
+          <span className="text-xs font-semibold text-mist">
+            Tap <span className="text-more">MORE</span> or <span className="text-less">LESS</span>. Best{' '}
+            <span className="text-white">{max}</span> lock at kickoff.
+          </span>
+          <span className="font-display text-lg text-gold">{count}/{max}</span>
+        </div>
+      )}
 
       {/* position filter */}
       <div className="no-scrollbar -mx-4 mt-3 flex gap-2 overflow-x-auto px-4">
@@ -68,10 +78,17 @@ export default function Today({ matches, pickFor, onPick, max, count }) {
         ))}
       </div>
 
+      {/* per-match kickoff notice */}
+      {matchStarted && !locked && (
+        <div className="mt-3 rounded-xl border border-line bg-panel px-3 py-2 text-center text-xs font-bold text-mist">
+          ⏱️ This match has kicked off — lines are closed.
+        </div>
+      )}
+
       {/* props */}
       <div className="mt-3 space-y-2.5">
         {props.map((prop) => (
-          <PropCard key={prop.id} prop={prop} picked={pickFor(prop.id)} onPick={onPick} />
+          <PropCard key={prop.id} prop={prop} picked={pickFor(prop.id)} onPick={onPick} locked={propsLocked} />
         ))}
       </div>
     </div>

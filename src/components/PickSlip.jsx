@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function PickSlip({ picks, max, onRemove, onClose }) {
+export default function PickSlip({ picks, max, locked, onRemove, onLock, onClose }) {
   const potential = picks.reduce((s, p) => s + p.value, 0);
 
   return (
@@ -10,9 +10,22 @@ export default function PickSlip({ picks, max, onRemove, onClose }) {
         <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-line" />
         <div className="mb-3 flex items-center justify-between">
           <h2 className="font-display text-2xl">YOUR SLIP</h2>
-          <span className="rounded-full bg-panel2 px-3 py-1 text-sm font-bold text-mist">
-            {picks.length}/{max}
-          </span>
+          <div className="flex items-center gap-2">
+            {locked ? (
+              <span className="rounded-full bg-gold/15 px-3 py-1 text-sm font-bold text-gold">🔒 Locked</span>
+            ) : (
+              <span className="rounded-full bg-panel2 px-3 py-1 text-sm font-bold text-mist">
+                {picks.length}/{max}
+              </span>
+            )}
+            <button
+              onClick={onClose}
+              aria-label="Close"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-panel2 text-mist transition hover:text-white"
+            >
+              ✕
+            </button>
+          </div>
         </div>
 
         {picks.length === 0 ? (
@@ -38,13 +51,15 @@ export default function PickSlip({ picks, max, onRemove, onClose }) {
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="font-display text-lg text-gold">+{p.value}</span>
-                  <button
-                    onClick={() => onRemove(p.id)}
-                    className="text-mist transition hover:text-less"
-                    aria-label="Remove pick"
-                  >
-                    ✕
-                  </button>
+                  {!locked && (
+                    <button
+                      onClick={() => onRemove(p.id)}
+                      className="text-mist transition hover:text-less"
+                      aria-label="Remove pick"
+                    >
+                      ✕
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -56,15 +71,23 @@ export default function PickSlip({ picks, max, onRemove, onClose }) {
           <span className="font-display text-3xl text-gold">{potential} pts</span>
         </div>
 
-        <button
-          disabled={picks.length === 0}
-          onClick={onClose}
-          className="mt-3 w-full rounded-2xl bg-more py-3.5 font-display text-lg tracking-wide text-ink transition active:scale-[0.98] disabled:opacity-40"
-        >
-          LOCK SLIP
-        </button>
+        {locked ? (
+          <div className="mt-3 w-full rounded-2xl border border-gold/40 bg-gold/10 py-3.5 text-center font-display text-lg tracking-wide text-gold">
+            🔒 SLIP LOCKED
+          </div>
+        ) : (
+          <button
+            disabled={picks.length === 0}
+            onClick={() => { onLock(); onClose(); }}
+            className="mt-3 w-full rounded-2xl bg-more py-3.5 font-display text-lg tracking-wide text-ink transition active:scale-[0.98] disabled:opacity-40"
+          >
+            LOCK SLIP
+          </button>
+        )}
         <p className="mt-2 text-center text-[11px] text-mist">
-          Picks lock automatically at the first kickoff · no edits after
+          {locked
+            ? 'Your picks are in. Good luck! 🍀'
+            : 'Locking is final · picks also lock automatically at the first kickoff'}
         </p>
       </div>
     </div>

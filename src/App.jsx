@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { MOCK_LEADERBOARD } from './lib/mockData.js';
 import { pickValue } from './lib/scoringEngine.js';
 import { AuthProvider, useAuth } from './context/AuthContext.jsx';
 import { DataProvider, useData } from './context/DataContext.jsx';
+import { subscribeSlip, writeSlip, todayKey } from './lib/slipStore.js';
 import AuthScreen from './pages/AuthScreen.jsx';
 import Onboarding from './pages/Onboarding.jsx';
 import Today from './pages/Today.jsx';
@@ -62,6 +63,51 @@ function MainApp() {
   const [tab, setTab] = useState('today');
   const [picks, setPicks] = useState([]); // [{ ...prop, side, value }]
   const [slipOpen, setSlipOpen] = useState(false);
+  const [locked, setLocked] = useState(false);
+  const day = useMemo(() => todayKey(), []);
+  const loadedRef = useRef(false);
+  const draftTimer = useRef(null);
+
+  // Restore the persisted slip. Load picks once (don't clobber live edits),
+  // but keep tracking `locked` so a server-side lock is always reflected.
+  useEffect(() => {
+    loadedRef.current = false;
+    return subscribeSlip(user.uid, day, (slip) => {
+      if (!slip) { loadedRef.current = true; return; }
+      if (!loadedRef.current) {
+        setPicks(slip.picks || []);
+        loadedRef.current = true;
+      }
+      setLocked((prev) => prev || !!slip.locked);
+    });
+  }, [user.uid, day]);
+
+  // Auto-lock once the earliest picked match has kicked off.
+  const earliestKickoff = useMemo(() => {
+    const koByMatch = Object.fromEntries(matches.map((m) => [m.id, new Date(m.kickoff).getTime()]));
+    const times = picks.map((p) => koByMatch[p.matchId]).filter((t) => Number.isFinite(t));
+    return times.length ? Math.min(...times) : null;
+  }, [picks, matches]);
+  const kickedOff = earliestKickoff != null && Date.now() >= earliestKickoff;
+  const effectiveLocked = locked || kickedOff;
+
+  // Persist a draft (debounced) whenever picks change while still editable.
+  useEffect(() => {
+    if (!loadedRef.current || effectiveLocked || picks.length === 0) return;
+    clearTimeout(draftTimer.current);
+    draftTimer.current = setTimeout(() => {
+      writeSlip(user.uid, day, { picks, locked: false }).catch((e) => console.error('draft save', e));
+    }, 700);
+    return () => clearTimeout(draftTimer.current);
+  }, [picks, effectiveLocked, user.uid, day]);
+
+  // If a match kicks off while the slip is open, latch it locked in storage.
+  useEffect(() => {
+    if (kickedOff && !locked && picks.length > 0) {
+      setLocked(true);
+      writeSlip(user.uid, day, { picks, locked: true }).catch((e) => console.error('auto-lock', e));
+    }
+  }, [kickedOff]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Leaderboard rows with the real signed-in user merged in (drops the demo
   // placeholder so "you" always reflect the actual account).
@@ -80,6 +126,7 @@ function MainApp() {
   const pickFor = (propId) => picks.find((p) => p.id === propId);
 
   function togglePick(prop, side) {
+    if (effectiveLocked) return;
     setPicks((prev) => {
       const existing = prev.find((p) => p.id === prop.id);
       // Tapping the same side again removes the pick.
@@ -93,7 +140,20 @@ function MainApp() {
   }
 
   function removePick(propId) {
+    if (effectiveLocked) return;
     setPicks((prev) => prev.filter((p) => p.id !== propId));
+  }
+
+  async function lockSlip() {
+    if (picks.length === 0 || effectiveLocked) return;
+    clearTimeout(draftTimer.current); // don't let a pending draft race the lock
+    setLocked(true);
+    try {
+      await writeSlip(user.uid, day, { picks, locked: true });
+    } catch (e) {
+      console.error('lock slip', e);
+      setLocked(false); // let them retry if the write failed
+    }
   }
 
   return (
@@ -107,7 +167,14 @@ function MainApp() {
           ) : matches.length === 0 ? (
             <EmptyToday />
           ) : (
-            <Today matches={matches} pickFor={pickFor} onPick={togglePick} max={MAX_PICKS} count={picks.length} />
+            <Today
+              matches={matches}
+              pickFor={pickFor}
+              onPick={togglePick}
+              max={MAX_PICKS}
+              count={picks.length}
+              locked={effectiveLocked}
+            />
           ))}
         {tab === 'board' && <LeaderboardPage rows={rows} meUid={user.uid} />}
         {tab === 'groups' && <GroupsPage />}
@@ -118,7 +185,9 @@ function MainApp() {
         <PickSlip
           picks={picks}
           max={MAX_PICKS}
+          locked={effectiveLocked}
           onRemove={removePick}
+          onLock={lockSlip}
           onClose={() => setSlipOpen(false)}
         />
       )}
