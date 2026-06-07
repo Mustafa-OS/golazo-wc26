@@ -2,6 +2,9 @@ import React, { useState, useMemo } from 'react';
 import { MOCK_MATCHES, MOCK_LEADERBOARD } from './lib/mockData.js';
 import { buildMatchProps } from './lib/lineEngine.js';
 import { pickValue } from './lib/scoringEngine.js';
+import { AuthProvider, useAuth } from './context/AuthContext.jsx';
+import AuthScreen from './pages/AuthScreen.jsx';
+import Onboarding from './pages/Onboarding.jsx';
 import Today from './pages/Today.jsx';
 import LeaderboardPage from './pages/LeaderboardPage.jsx';
 import GroupsPage from './pages/GroupsPage.jsx';
@@ -18,6 +21,39 @@ const NAV = [
 ];
 
 export default function App() {
+  return (
+    <AuthProvider>
+      <Root />
+    </AuthProvider>
+  );
+}
+
+// Gate the app behind auth state.
+function Root() {
+  const { status } = useAuth();
+  if (status === 'loading') return <Splash />;
+  if (status === 'signedOut') return <AuthScreen />;
+  if (status === 'needsOnboarding') return <Onboarding />;
+  return <MainApp />;
+}
+
+function Splash() {
+  return (
+    <div className="flex min-h-full items-center justify-center">
+      <div className="animate-pulse text-center">
+        <div className="font-display text-5xl tracking-wide">
+          OVER<span className="text-more">.</span>
+        </div>
+        <div className="mt-2 text-[11px] font-semibold uppercase tracking-[0.3em] text-mist">
+          Loading
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MainApp() {
+  const { user } = useAuth();
   const [tab, setTab] = useState('today');
   const [picks, setPicks] = useState([]); // [{ ...prop, side, value }]
   const [slipOpen, setSlipOpen] = useState(false);
@@ -27,6 +63,20 @@ export default function App() {
     () => MOCK_MATCHES.map((m) => ({ ...m, props: buildMatchProps(m) })),
     []
   );
+
+  // Leaderboard rows with the real signed-in user merged in (drops the demo
+  // placeholder so "you" always reflect the actual account).
+  const rows = useMemo(() => {
+    const others = MOCK_LEADERBOARD.filter((r) => r.uid !== 'me' && r.uid !== user.uid);
+    const meRow = {
+      uid: user.uid,
+      name: user.name,
+      dept: user.dept,
+      points: user.points || 0,
+      streak: user.streak || 0,
+    };
+    return [...others, meRow];
+  }, [user]);
 
   const pickFor = (propId) => picks.find((p) => p.id === propId);
 
@@ -55,9 +105,9 @@ export default function App() {
         {tab === 'today' && (
           <Today matches={matches} pickFor={pickFor} onPick={togglePick} max={MAX_PICKS} count={picks.length} />
         )}
-        {tab === 'board' && <LeaderboardPage rows={MOCK_LEADERBOARD} />}
+        {tab === 'board' && <LeaderboardPage rows={rows} meUid={user.uid} />}
         {tab === 'groups' && <GroupsPage />}
-        {tab === 'me' && <Profile rows={MOCK_LEADERBOARD} />}
+        {tab === 'me' && <Profile rows={rows} />}
       </main>
 
       {slipOpen && (

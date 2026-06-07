@@ -1,25 +1,27 @@
 import React from 'react';
+import { useAuth } from '../context/AuthContext.jsx';
 
 export default function Profile({ rows }) {
-  const me = rows.find((r) => r.uid === 'me') || rows[0];
-  const rank = [...rows].sort((a, b) => b.points - a.points).findIndex((r) => r.uid === me.uid) + 1;
+  const { user, signOut, mode } = useAuth();
+  const sorted = [...rows].sort((a, b) => b.points - a.points);
+  const rank = sorted.findIndex((r) => r.uid === user.uid) + 1;
 
   const stats = [
-    { label: 'Total Points', value: me.points, accent: 'text-gold' },
-    { label: 'Imperial Rank', value: `#${rank}`, accent: 'text-more' },
-    { label: 'Day Streak', value: `🔥 ${me.streak}`, accent: 'text-white' },
-    { label: 'Hit Rate', value: '61%', accent: 'text-white' },
+    { label: 'Total Points', value: user.points || 0, accent: 'text-gold' },
+    { label: 'Imperial Rank', value: rank ? `#${rank}` : '—', accent: 'text-more' },
+    { label: 'Day Streak', value: `🔥 ${user.streak || 0}`, accent: 'text-white' },
+    { label: 'Hit Rate', value: user.hitRate ? `${user.hitRate}%` : '—', accent: 'text-white' },
   ];
 
   return (
     <div>
       <div className="mt-4 flex items-center gap-4">
         <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-more text-3xl font-extrabold text-ink">
-          {me.name[0]}
+          {(user.name || '?')[0]}
         </div>
-        <div>
-          <div className="font-display text-2xl">{me.name}</div>
-          <div className="text-sm font-semibold text-mist">{me.dept} · Imperial</div>
+        <div className="min-w-0">
+          <div className="truncate font-display text-2xl">{user.name}</div>
+          <div className="text-sm font-semibold text-mist">{user.dept} · Imperial</div>
         </div>
       </div>
 
@@ -40,6 +42,19 @@ export default function Profile({ rows }) {
           <li>• Keep a daily streak for up to +50% bonus points.</li>
         </ul>
       </div>
+
+      <button
+        onClick={signOut}
+        className="mt-5 w-full rounded-2xl border border-line bg-panel2 py-3 text-sm font-bold text-mist transition active:scale-[0.98] hover:text-less"
+      >
+        Sign out
+      </button>
+
+      {mode !== 'live' && (
+        <p className="mt-3 text-center text-[11px] text-mist">
+          {mode === 'mock' ? 'Demo mode — data is local to this browser.' : 'Connected to local emulator.'}
+        </p>
+      )}
     </div>
   );
 }

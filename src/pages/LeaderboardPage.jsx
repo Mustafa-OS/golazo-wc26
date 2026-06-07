@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-export default function LeaderboardPage({ rows }) {
+export default function LeaderboardPage({ rows, meUid }) {
   const [scope, setScope] = useState('imperial');
   const sorted = [...rows].sort((a, b) => b.points - a.points);
   const top3 = sorted.slice(0, 3);
@@ -51,15 +51,15 @@ export default function LeaderboardPage({ rows }) {
       {/* the rest */}
       <div className="mt-4 space-y-2">
         {rest.map((u, i) => (
-          <Row key={u.uid} rank={i + 4} u={u} />
+          <Row key={u.uid} rank={i + 4} u={u} meUid={meUid} />
         ))}
       </div>
     </div>
   );
 }
 
-function Row({ rank, u }) {
-  const isMe = u.uid === 'me';
+function Row({ rank, u, meUid }) {
+  const isMe = u.uid === meUid;
   return (
     <div
       className={`flex items-center justify-between rounded-xl border px-3 py-2.5 ${

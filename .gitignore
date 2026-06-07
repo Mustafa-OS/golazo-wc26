@@ -10,3 +10,5 @@ functions/*.cjs
 emulator-data
 *.log
 .DS_Store
+scripts/smoke.mjs
+scripts/shots.mjs
