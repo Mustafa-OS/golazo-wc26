@@ -16,3 +16,4 @@ scripts/emulator-smoke.mjs
 scripts/rules-test.mjs
 scripts/groups-test.mjs
 scripts/gen-icons.mjs
+scripts/gen-og.mjs
