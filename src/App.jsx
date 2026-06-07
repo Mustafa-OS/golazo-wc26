@@ -1,5 +1,4 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { MOCK_LEADERBOARD } from './lib/mockData.js';
 import { pickValue } from './lib/scoringEngine.js';
 import { AuthProvider, useAuth } from './context/AuthContext.jsx';
 import { DataProvider, useData } from './context/DataContext.jsx';
@@ -59,7 +58,7 @@ function Splash() {
 
 function MainApp() {
   const { user } = useAuth();
-  const { matches, loading } = useData();
+  const { matches, loading, leaderboard } = useData();
   const [tab, setTab] = useState('today');
   const [picks, setPicks] = useState([]); // [{ ...prop, side, value }]
   const [slipOpen, setSlipOpen] = useState(false);
@@ -109,10 +108,10 @@ function MainApp() {
     }
   }, [kickedOff]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Leaderboard rows with the real signed-in user merged in (drops the demo
-  // placeholder so "you" always reflect the actual account).
+  // Leaderboard rows with the real signed-in user merged in (drops any stale
+  // copy of "me" so the row always reflects the live profile points/streak).
   const rows = useMemo(() => {
-    const others = MOCK_LEADERBOARD.filter((r) => r.uid !== 'me' && r.uid !== user.uid);
+    const others = leaderboard.filter((r) => r.uid !== 'me' && r.uid !== user.uid);
     const meRow = {
       uid: user.uid,
       name: user.name,
@@ -121,7 +120,7 @@ function MainApp() {
       streak: user.streak || 0,
     };
     return [...others, meRow];
-  }, [user]);
+  }, [leaderboard, user]);
 
   const pickFor = (propId) => picks.find((p) => p.id === propId);
 

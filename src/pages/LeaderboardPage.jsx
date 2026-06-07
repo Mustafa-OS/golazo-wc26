@@ -27,6 +27,17 @@ export default function LeaderboardPage({ rows, meUid }) {
         ))}
       </div>
 
+      {scope === 'group' ? (
+        <div className="mt-8 flex flex-col items-center justify-center px-6 text-center">
+          <div className="text-5xl">👥</div>
+          <h2 className="mt-3 font-display text-xl">GROUP BOARDS</h2>
+          <p className="mt-2 max-w-xs text-sm font-semibold text-mist">
+            Join or create a group on the <span className="text-more">Groups</span> tab to battle
+            your course, halls, or society on a private board.
+          </p>
+        </div>
+      ) : (
+        <>
       {/* podium */}
       <div className="mt-5 grid grid-cols-3 items-end gap-2">
         {[top3[1], top3[0], top3[2]].filter(Boolean).map((u, i) => {
@@ -54,6 +65,8 @@ export default function LeaderboardPage({ rows, meUid }) {
           <Row key={u.uid} rank={i + 4} u={u} meUid={meUid} />
         ))}
       </div>
+        </>
+      )}
     </div>
   );
 }

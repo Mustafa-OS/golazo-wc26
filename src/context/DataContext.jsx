@@ -12,7 +12,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { MOCK_MODE, db } from '../firebase.js';
-import { MOCK_MATCHES } from '../lib/mockData.js';
+import { MOCK_MATCHES, MOCK_LEADERBOARD } from '../lib/mockData.js';
 import { buildMatchProps } from '../lib/lineEngine.js';
 
 const DataCtx = createContext(null);
@@ -25,6 +25,22 @@ function buildMockMatches() {
 export function DataProvider({ children }) {
   const [matches, setMatches] = useState(() => (MOCK_MODE ? buildMockMatches() : []));
   const [loading, setLoading] = useState(!MOCK_MODE);
+  const [leaderboard, setLeaderboard] = useState(() => (MOCK_MODE ? MOCK_LEADERBOARD : []));
+
+  // Imperial leaderboard (the `leaderboards/imperial` board the function rolls up).
+  useEffect(() => {
+    if (MOCK_MODE) return;
+    let unsub = () => {};
+    (async () => {
+      const { doc, onSnapshot } = await import('firebase/firestore');
+      unsub = onSnapshot(
+        doc(db, 'leaderboards', 'imperial'),
+        (snap) => setLeaderboard(snap.exists() ? snap.data().board || [] : []),
+        (err) => console.error('leaderboard subscription error', err)
+      );
+    })();
+    return () => unsub();
+  }, []);
 
   useEffect(() => {
     if (MOCK_MODE) return;
@@ -77,5 +93,5 @@ export function DataProvider({ children }) {
     };
   }, []);
 
-  return <DataCtx.Provider value={{ matches, loading }}>{children}</DataCtx.Provider>;
+  return <DataCtx.Provider value={{ matches, loading, leaderboard }}>{children}</DataCtx.Provider>;
 }
