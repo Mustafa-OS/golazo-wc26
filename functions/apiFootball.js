@@ -85,6 +85,7 @@ export function normalisePlayerStats(apiResponse) {
         goals: s.goals?.total ?? 0,
         assists: s.goals?.assists ?? 0,
         saves: s.goals?.saves ?? 0,
+        conceded: s.goals?.conceded ?? 0,
         shots: s.shots?.total ?? 0,
         shotsOn: s.shots?.on ?? 0,
         passes: s.passes?.total ?? 0,

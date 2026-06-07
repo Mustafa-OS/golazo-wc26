@@ -19,28 +19,33 @@ export const METRICS = {
   shots:        { key: 'shots',        label: 'Shots',          short: 'SH'  },
   shotsOn:      { key: 'shotsOn',      label: 'Shots on Target',short: 'SOT' },
   saves:        { key: 'saves',        label: 'Saves',          short: 'SV'  },
+  conceded:     { key: 'conceded',     label: 'Goals Conceded', short: 'GC'  },
   tackles:      { key: 'tackles',      label: 'Tackles',        short: 'TKL' },
   passes:       { key: 'passes',       label: 'Passes',         short: 'PAS' },
   fouls:        { key: 'fouls',        label: 'Fouls Committed',short: 'FLS' },
   cards:        { key: 'cards',        label: 'Cards',          short: 'CRD' },
 };
 
-// Which metrics make sense for which position. Keeps the prop list relevant
-// (no "saves" line on a striker, no "goals" line front-and-centre for a keeper).
+// Which metrics make sense for which position, in headline-first order (the
+// first entry is the default a player's card opens on). Keepers get saves +
+// goals conceded — never a goals line (a keeper scoring is a ~1% novelty, which
+// made one side a pointless near-lock).
 const POSITION_METRICS = {
-  G: ['saves', 'passes', 'goals'],
-  D: ['tackles', 'passes', 'shots', 'goals', 'cards'],
-  M: ['assists', 'passes', 'shots', 'shotsOn', 'tackles', 'goals'],
+  G: ['saves', 'conceded'],
+  D: ['tackles', 'cards', 'shots', 'passes', 'goals'],
+  M: ['shots', 'shotsOn', 'assists', 'tackles', 'passes', 'goals'],
   F: ['goals', 'shotsOn', 'shots', 'assists'],
 };
 
-// Position default baselines = expected count for an average starter in 90 mins.
-// Used when we have no per-player history. Tuned to feel right for WC level.
+// Position default baselines = expected count for an average starter in 90 mins,
+// used when we have no per-player history. Tuned to WC level so the half-line
+// sits near the median and both sides of a prop are live (not a near-certainty).
+// Sanity: line = round(baseline) area; MORE ≈ P(X ≥ ceil(line)) lands ~25–55%.
 const POSITION_BASELINE = {
-  G: { saves: 2.8, passes: 22, goals: 0.01 },
-  D: { tackles: 2.2, passes: 48, shots: 0.4, goals: 0.06, cards: 0.28 },
-  M: { assists: 0.18, passes: 52, shots: 1.1, shotsOn: 0.45, tackles: 1.8, goals: 0.12 },
-  F: { goals: 0.42, shotsOn: 1.1, shots: 2.6, assists: 0.16 },
+  G: { saves: 2.8, conceded: 1.15 },
+  D: { tackles: 2.1, cards: 0.30, shots: 0.5, passes: 50, goals: 0.07 },
+  M: { shots: 1.2, shotsOn: 0.5, assists: 0.18, tackles: 1.7, passes: 55, goals: 0.12 },
+  F: { goals: 0.45, shotsOn: 1.2, shots: 2.6, assists: 0.18 },
 };
 
 // Round a raw baseline to a clean half-line (0.5, 1.5, 2.5 ...). Half-lines

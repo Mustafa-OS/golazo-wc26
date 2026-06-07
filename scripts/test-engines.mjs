@@ -21,6 +21,9 @@ try {
 
   eq('striker goals line is a half-line 0.5', buildLine(striker, 'goals').line, 0.5);
   ok('keeper gets a saves prop', buildPlayerProps(gk).some((p) => p.metric === 'saves'));
+  ok('keeper gets a goals-conceded prop', buildPlayerProps(gk).some((p) => p.metric === 'conceded'));
+  ok('keeper has NO goals line (no more 1%-novelty prop)', buildLine(gk, 'goals') === null);
+  ok('keeper conceded line sits near the median (1.5)', buildLine(gk, 'conceded').line === 1.5);
   ok('striker cannot get a saves line', buildLine(striker, 'saves') === null);
   ok('per-player form upgrades the line', buildLine({ ...striker, baselines: { goals: 1.6 } }, 'goals').line === 1.5);
 

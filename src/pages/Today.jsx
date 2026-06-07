@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import PropCard from '../components/PropCard.jsx';
 
 function kickoffLabel(iso) {
@@ -28,8 +28,25 @@ export default function Today({ matches, pickFor, onPick, max, count, locked }) 
   const matchStarted = match && Date.now() >= new Date(match.kickoff).getTime();
   const propsLocked = locked || matchStarted;
 
-  const props =
-    posFilter === 'ALL' ? match.props : match.props.filter((p) => p.position === posFilter);
+  // One card per player: group this match's props by player (preserving order).
+  const players = useMemo(() => {
+    const byId = new Map();
+    for (const p of match.props) {
+      if (!byId.has(p.playerId)) {
+        byId.set(p.playerId, {
+          id: p.playerId,
+          name: p.playerName,
+          position: p.position,
+          teamCode: p.teamCode,
+          props: [],
+        });
+      }
+      byId.get(p.playerId).props.push(p);
+    }
+    return [...byId.values()];
+  }, [match]);
+
+  const shown = posFilter === 'ALL' ? players : players.filter((pl) => pl.position === posFilter);
 
   return (
     <div>
@@ -103,10 +120,17 @@ export default function Today({ matches, pickFor, onPick, max, count, locked }) 
         </div>
       )}
 
-      {/* props */}
+      {/* one card per player */}
       <div className="mt-3 space-y-2.5">
-        {props.map((prop) => (
-          <PropCard key={prop.id} prop={prop} picked={pickFor(prop.id)} onPick={onPick} locked={propsLocked} />
+        {shown.map((player) => (
+          <PropCard
+            key={player.id}
+            player={player}
+            props={player.props}
+            pickFor={pickFor}
+            onPick={onPick}
+            locked={propsLocked}
+          />
         ))}
       </div>
     </div>
