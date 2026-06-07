@@ -12,3 +12,5 @@ emulator-data
 .DS_Store
 scripts/smoke.mjs
 scripts/shots.mjs
+scripts/emulator-smoke.mjs
+scripts/rules-test.mjs

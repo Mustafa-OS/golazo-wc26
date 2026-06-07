@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import { MOCK_MATCHES, MOCK_LEADERBOARD } from './lib/mockData.js';
-import { buildMatchProps } from './lib/lineEngine.js';
+import { MOCK_LEADERBOARD } from './lib/mockData.js';
 import { pickValue } from './lib/scoringEngine.js';
 import { AuthProvider, useAuth } from './context/AuthContext.jsx';
+import { DataProvider, useData } from './context/DataContext.jsx';
 import AuthScreen from './pages/AuthScreen.jsx';
 import Onboarding from './pages/Onboarding.jsx';
 import Today from './pages/Today.jsx';
@@ -34,7 +34,11 @@ function Root() {
   if (status === 'loading') return <Splash />;
   if (status === 'signedOut') return <AuthScreen />;
   if (status === 'needsOnboarding') return <Onboarding />;
-  return <MainApp />;
+  return (
+    <DataProvider>
+      <MainApp />
+    </DataProvider>
+  );
 }
 
 function Splash() {
@@ -54,15 +58,10 @@ function Splash() {
 
 function MainApp() {
   const { user } = useAuth();
+  const { matches, loading } = useData();
   const [tab, setTab] = useState('today');
   const [picks, setPicks] = useState([]); // [{ ...prop, side, value }]
   const [slipOpen, setSlipOpen] = useState(false);
-
-  // Pre-compute every prop for every match once.
-  const matches = useMemo(
-    () => MOCK_MATCHES.map((m) => ({ ...m, props: buildMatchProps(m) })),
-    []
-  );
 
   // Leaderboard rows with the real signed-in user merged in (drops the demo
   // placeholder so "you" always reflect the actual account).
@@ -102,9 +101,14 @@ function MainApp() {
       <Header picks={picks} max={MAX_PICKS} onOpenSlip={() => setSlipOpen(true)} />
 
       <main className="flex-1 px-4 pb-28 pt-2">
-        {tab === 'today' && (
-          <Today matches={matches} pickFor={pickFor} onPick={togglePick} max={MAX_PICKS} count={picks.length} />
-        )}
+        {tab === 'today' &&
+          (loading ? (
+            <TodaySkeleton />
+          ) : matches.length === 0 ? (
+            <EmptyToday />
+          ) : (
+            <Today matches={matches} pickFor={pickFor} onPick={togglePick} max={MAX_PICKS} count={picks.length} />
+          ))}
         {tab === 'board' && <LeaderboardPage rows={rows} meUid={user.uid} />}
         {tab === 'groups' && <GroupsPage />}
         {tab === 'me' && <Profile rows={rows} />}
@@ -145,6 +149,33 @@ function Header({ picks, max, onOpenSlip }) {
         </span>
       </button>
     </header>
+  );
+}
+
+function TodaySkeleton() {
+  return (
+    <div className="space-y-3 pt-2">
+      <div className="flex gap-3">
+        <div className="h-20 w-[150px] shrink-0 animate-pulse rounded-2xl bg-panel" />
+        <div className="h-20 w-[150px] shrink-0 animate-pulse rounded-2xl bg-panel" />
+      </div>
+      {[0, 1, 2, 3].map((i) => (
+        <div key={i} className="h-28 animate-pulse rounded-2xl bg-panel" />
+      ))}
+    </div>
+  );
+}
+
+function EmptyToday() {
+  return (
+    <div className="flex flex-col items-center justify-center px-6 py-20 text-center">
+      <div className="text-5xl">🗓️</div>
+      <h2 className="mt-4 font-display text-2xl">NO MATCHES YET</h2>
+      <p className="mt-2 max-w-xs text-sm font-semibold text-mist">
+        Today’s lines drop every morning at 08:00 once fixtures and lineups are in.
+        Check back then to build your slip.
+      </p>
+    </div>
   );
 }
 
