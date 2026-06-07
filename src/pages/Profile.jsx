@@ -18,6 +18,15 @@ export default function Profile({ rows }) {
       }
     } catch { /* user dismissed share sheet */ }
   }
+
+  // Demo-only: wipe local accounts/slips/groups and reload fresh.
+  function resetDemo() {
+    Object.keys(localStorage)
+      .filter((k) => k.startsWith('over.'))
+      .forEach((k) => localStorage.removeItem(k));
+    window.location.reload();
+  }
+
   const sorted = [...rows].sort((a, b) => b.points - a.points);
   const rank = sorted.findIndex((r) => r.uid === user.uid) + 1;
 
@@ -71,6 +80,15 @@ export default function Profile({ rows }) {
       >
         Sign out
       </button>
+
+      {mode === 'mock' && (
+        <button
+          onClick={resetDemo}
+          className="mt-3 w-full rounded-2xl border border-line bg-panel py-2.5 text-xs font-bold text-mist transition active:scale-[0.98] hover:text-less"
+        >
+          Reset demo data
+        </button>
+      )}
 
       {mode !== 'live' && (
         <p className="mt-3 text-center text-[11px] text-mist">
