@@ -14,3 +14,4 @@ scripts/smoke.mjs
 scripts/shots.mjs
 scripts/emulator-smoke.mjs
 scripts/rules-test.mjs
+scripts/groups-test.mjs

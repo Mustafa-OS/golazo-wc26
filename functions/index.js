@@ -19,6 +19,9 @@ const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const { defineSecret } = require('firebase-functions/params');
 const admin = require('firebase-admin');
+// FieldValue from the modular entry point (admin.firestore.FieldValue is
+// undefined in firebase-admin v12).
+const { FieldValue } = require('firebase-admin/firestore');
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -94,7 +97,7 @@ exports.resolveFinished = onSchedule(
         // Increment the user's running total.
         writes.set(
           db.doc(`users/${slip.uid}`),
-          { points: admin.firestore.FieldValue.increment(total) },
+          { points: FieldValue.increment(total) },
           { merge: true }
         );
       }
@@ -124,6 +127,6 @@ exports.joinGroup = onCall(async (req) => {
   const q = await db.collection('groups').where('code', '==', code).limit(1).get();
   if (q.empty) throw new HttpsError('not-found', 'No group with that code.');
   const group = q.docs[0];
-  await group.ref.update({ members: admin.firestore.FieldValue.arrayUnion(req.auth.uid) });
+  await group.ref.update({ members: FieldValue.arrayUnion(req.auth.uid) });
   return { groupId: group.id, name: group.get('name') };
 });

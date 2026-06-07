@@ -42,12 +42,17 @@ service cloud.firestore {
     // Leaderboards: read-only to clients.
     match /leaderboards/{id} { allow read: if request.auth != null; allow write: if false; }
 
-    // Groups: members can read; anyone signed in can create. Joining goes
-    // through the joinGroup callable (which validates the code).
+    // Groups: only members can read (keeps join codes private — no enumerating
+    // every group). You create your own group with yourself as the sole member.
+    // Joining is server-only: the joinGroup callable validates the code and adds
+    // you via the Admin SDK, so direct client updates are blocked.
     match /groups/{gid} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null;
-      allow update: if request.auth != null;
+      allow read: if request.auth != null && request.auth.uid in resource.data.members;
+      allow create: if request.auth != null
+                    && request.resource.data.ownerUid == request.auth.uid
+                    && request.resource.data.members.hasOnly([request.auth.uid])
+                    && request.resource.data.members.size() == 1;
+      allow update, delete: if false;
     }
   }
 }

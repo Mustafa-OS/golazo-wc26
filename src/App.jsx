@@ -3,6 +3,7 @@ import { pickValue } from './lib/scoringEngine.js';
 import { AuthProvider, useAuth } from './context/AuthContext.jsx';
 import { DataProvider, useData } from './context/DataContext.jsx';
 import { subscribeSlip, writeSlip, todayKey } from './lib/slipStore.js';
+import { subscribeMyGroups, createGroup, joinGroup } from './lib/groupStore.js';
 import AuthScreen from './pages/AuthScreen.jsx';
 import Onboarding from './pages/Onboarding.jsx';
 import Today from './pages/Today.jsx';
@@ -63,9 +64,13 @@ function MainApp() {
   const [picks, setPicks] = useState([]); // [{ ...prop, side, value }]
   const [slipOpen, setSlipOpen] = useState(false);
   const [locked, setLocked] = useState(false);
+  const [groups, setGroups] = useState([]);
   const day = useMemo(() => todayKey(), []);
   const loadedRef = useRef(false);
   const draftTimer = useRef(null);
+
+  // The groups this user belongs to (for the Groups tab + group boards).
+  useEffect(() => subscribeMyGroups(user.uid, setGroups), [user.uid]);
 
   // Restore the persisted slip. Load picks once (don't clobber live edits),
   // but keep tracking `locked` so a server-side lock is always reflected.
@@ -175,8 +180,14 @@ function MainApp() {
               locked={effectiveLocked}
             />
           ))}
-        {tab === 'board' && <LeaderboardPage rows={rows} meUid={user.uid} />}
-        {tab === 'groups' && <GroupsPage />}
+        {tab === 'board' && <LeaderboardPage rows={rows} meUid={user.uid} groups={groups} />}
+        {tab === 'groups' && (
+          <GroupsPage
+            groups={groups}
+            onCreate={(name) => createGroup(user.uid, name)}
+            onJoin={(code) => joinGroup(user.uid, code)}
+          />
+        )}
         {tab === 'me' && <Profile rows={rows} />}
       </main>
 

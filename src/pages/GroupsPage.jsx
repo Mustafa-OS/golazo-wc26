@@ -1,27 +1,33 @@
 import React, { useState } from 'react';
 
-// Demo state only. Wire create/join to the joinGroup Cloud Function + Firestore.
-const SEED_GROUPS = [
-  { id: 'g1', name: 'Dyson DesEng', code: 'DYSON26', members: 23 },
-  { id: 'g2', name: 'Beit Halls Boys', code: 'BEIT99', members: 11 },
-];
-
-export default function GroupsPage() {
-  const [groups, setGroups] = useState(SEED_GROUPS);
+export default function GroupsPage({ groups, onCreate, onJoin }) {
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState(null); // { kind: 'ok'|'err', text }
 
-  function join() {
-    const c = code.trim().toUpperCase();
-    if (!c || groups.some((g) => g.code === c)) return setCode('');
-    setGroups((g) => [...g, { id: Date.now().toString(), name: `Group ${c}`, code: c, members: 1 }]);
-    setCode('');
+  async function join() {
+    if (busy) return;
+    setBusy(true); setMsg(null);
+    try {
+      const res = await onJoin(code);
+      setMsg({ kind: 'ok', text: `Joined ${res?.name || 'the group'}! 🎉` });
+      setCode('');
+    } catch (e) {
+      setMsg({ kind: 'err', text: e.message || 'Could not join that group.' });
+    } finally { setBusy(false); }
   }
-  function create() {
-    if (!name.trim()) return;
-    const c = name.slice(0, 4).toUpperCase() + Math.floor(Math.random() * 90 + 10);
-    setGroups((g) => [...g, { id: Date.now().toString(), name: name.trim(), code: c, members: 1 }]);
-    setName('');
+
+  async function create() {
+    if (busy) return;
+    setBusy(true); setMsg(null);
+    try {
+      const g = await onCreate(name);
+      setMsg({ kind: 'ok', text: `Created “${g.name}” — share code ${g.code}` });
+      setName('');
+    } catch (e) {
+      setMsg({ kind: 'err', text: e.message || 'Could not create the group.' });
+    } finally { setBusy(false); }
   }
 
   return (
@@ -31,6 +37,18 @@ export default function GroupsPage() {
         Make a private league and battle your course / halls / society.
       </p>
 
+      {msg && (
+        <div
+          className={`mt-3 rounded-xl border px-3.5 py-2.5 text-sm font-semibold ${
+            msg.kind === 'ok'
+              ? 'border-more/40 bg-more/10 text-more'
+              : 'border-less/40 bg-less/10 text-less'
+          }`}
+        >
+          {msg.text}
+        </div>
+      )}
+
       <div className="mt-4 rounded-2xl border border-line bg-panel p-3">
         <div className="text-xs font-bold uppercase tracking-wide text-mist">Join with a code</div>
         <div className="mt-2 flex gap-2">
@@ -38,9 +56,14 @@ export default function GroupsPage() {
             value={code}
             onChange={(e) => setCode(e.target.value)}
             placeholder="e.g. DYSON26"
+            onKeyDown={(e) => e.key === 'Enter' && join()}
             className="flex-1 rounded-xl border border-line bg-panel2 px-3 py-2.5 text-sm font-semibold uppercase tracking-wide outline-none placeholder:normal-case placeholder:text-mist focus:border-more"
           />
-          <button onClick={join} className="rounded-xl bg-more px-4 font-bold text-ink active:scale-95">
+          <button
+            onClick={join}
+            disabled={busy || !code.trim()}
+            className="rounded-xl bg-more px-4 font-bold text-ink transition active:scale-95 disabled:opacity-40"
+          >
             Join
           </button>
         </div>
@@ -53,26 +76,40 @@ export default function GroupsPage() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Group name"
+            maxLength={24}
+            onKeyDown={(e) => e.key === 'Enter' && create()}
             className="flex-1 rounded-xl border border-line bg-panel2 px-3 py-2.5 text-sm font-semibold outline-none placeholder:text-mist focus:border-more"
           />
-          <button onClick={create} className="rounded-xl border border-line bg-panel2 px-4 font-bold text-more active:scale-95">
+          <button
+            onClick={create}
+            disabled={busy || !name.trim()}
+            className="rounded-xl border border-line bg-panel2 px-4 font-bold text-more transition active:scale-95 disabled:opacity-40"
+          >
             Create
           </button>
         </div>
       </div>
 
       <div className="mt-5 space-y-2">
-        {groups.map((g) => (
-          <div key={g.id} className="flex items-center justify-between rounded-xl border border-line bg-panel px-3 py-3">
-            <div>
-              <div className="text-sm font-bold">{g.name}</div>
-              <div className="text-[11px] font-semibold text-mist">{g.members} members</div>
+        {groups.length === 0 ? (
+          <p className="py-8 text-center text-sm text-mist">
+            You’re not in any groups yet. Join one with a code, or create your own.
+          </p>
+        ) : (
+          groups.map((g) => (
+            <div key={g.id} className="flex items-center justify-between rounded-xl border border-line bg-panel px-3 py-3">
+              <div>
+                <div className="text-sm font-bold">{g.name}</div>
+                <div className="text-[11px] font-semibold text-mist">
+                  {(g.members?.length ?? 0)} member{(g.members?.length ?? 0) === 1 ? '' : 's'}
+                </div>
+              </div>
+              <div className="rounded-lg bg-panel2 px-3 py-1.5 font-display text-base tracking-widest text-gold">
+                {g.code}
+              </div>
             </div>
-            <div className="rounded-lg bg-panel2 px-3 py-1.5 font-display text-base tracking-widest text-gold">
-              {g.code}
-            </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );

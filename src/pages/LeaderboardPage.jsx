@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-export default function LeaderboardPage({ rows, meUid }) {
+export default function LeaderboardPage({ rows, meUid, groups = [] }) {
   const [scope, setScope] = useState('imperial');
   const sorted = [...rows].sort((a, b) => b.points - a.points);
   const top3 = sorted.slice(0, 3);
@@ -28,14 +28,44 @@ export default function LeaderboardPage({ rows, meUid }) {
       </div>
 
       {scope === 'group' ? (
-        <div className="mt-8 flex flex-col items-center justify-center px-6 text-center">
-          <div className="text-5xl">👥</div>
-          <h2 className="mt-3 font-display text-xl">GROUP BOARDS</h2>
-          <p className="mt-2 max-w-xs text-sm font-semibold text-mist">
-            Join or create a group on the <span className="text-more">Groups</span> tab to battle
-            your course, halls, or society on a private board.
-          </p>
-        </div>
+        groups.length === 0 ? (
+          <div className="mt-8 flex flex-col items-center justify-center px-6 text-center">
+            <div className="text-5xl">👥</div>
+            <h2 className="mt-3 font-display text-xl">GROUP BOARDS</h2>
+            <p className="mt-2 max-w-xs text-sm font-semibold text-mist">
+              Join or create a group on the <span className="text-more">Groups</span> tab to battle
+              your course, halls, or society on a private board.
+            </p>
+          </div>
+        ) : (
+          <div className="mt-4 space-y-5">
+            {groups.map((g) => {
+              const memberSet = new Set(g.members || []);
+              const board = sorted.filter((u) => memberSet.has(u.uid));
+              return (
+                <div key={g.id}>
+                  <div className="mb-2 flex items-center justify-between">
+                    <h3 className="font-display text-lg">{g.name}</h3>
+                    <span className="rounded-lg bg-panel2 px-2.5 py-1 font-display text-sm tracking-widest text-gold">
+                      {g.code}
+                    </span>
+                  </div>
+                  {board.length === 0 ? (
+                    <p className="rounded-xl border border-line bg-panel px-3 py-3 text-xs font-semibold text-mist">
+                      No points on the board yet — pick a slip to get {g.name} started.
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {board.map((u, i) => (
+                        <Row key={u.uid} rank={i + 1} u={u} meUid={meUid} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )
       ) : (
         <>
       {/* podium */}
