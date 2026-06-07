@@ -6,6 +6,17 @@ function kickoffLabel(iso) {
   return d.toLocaleString('en-GB', { weekday: 'short', hour: '2-digit', minute: '2-digit' });
 }
 
+// Relative kickoff status for the match rail.
+function relKickoff(iso) {
+  const ms = new Date(iso).getTime() - Date.now();
+  if (ms <= 0) return { live: true, text: '🔴 LIVE' };
+  const h = Math.floor(ms / 3.6e6);
+  const m = Math.floor((ms % 3.6e6) / 6e4);
+  if (h >= 24) return { text: kickoffLabel(iso) };
+  if (h >= 1) return { text: `in ${h}h ${m}m` };
+  return { text: `in ${m}m` };
+}
+
 export default function Today({ matches, pickFor, onPick, max, count, locked }) {
   const [activeId, setActiveId] = useState(matches[0]?.id);
   const [posFilter, setPosFilter] = useState('ALL');
@@ -42,7 +53,14 @@ export default function Today({ matches, pickFor, onPick, max, count, locked }) 
               <span>{m.away.code}</span>
               <span>{m.away.flag}</span>
             </div>
-            <div className="mt-1 text-[11px] font-semibold text-mist">{kickoffLabel(m.kickoff)}</div>
+            {(() => {
+              const k = relKickoff(m.kickoff);
+              return (
+                <div className={`mt-1 text-[11px] font-bold ${k.live ? 'text-less' : 'text-mist'}`}>
+                  {k.text}
+                </div>
+              );
+            })()}
           </button>
         ))}
       </div>

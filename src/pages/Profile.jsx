@@ -1,8 +1,23 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 
 export default function Profile({ rows }) {
   const { user, signOut, mode } = useAuth();
+  const [copied, setCopied] = useState(false);
+
+  async function shareApp() {
+    const url = window.location.origin;
+    const text = "I'm playing OVER. — Imperial's World Cup 2026 props game. No betting, just bragging rights. Get on:";
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: 'OVER.', text, url });
+      } else {
+        await navigator.clipboard.writeText(`${text} ${url}`);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }
+    } catch { /* user dismissed share sheet */ }
+  }
   const sorted = [...rows].sort((a, b) => b.points - a.points);
   const rank = sorted.findIndex((r) => r.uid === user.uid) + 1;
 
@@ -44,8 +59,15 @@ export default function Profile({ rows }) {
       </div>
 
       <button
+        onClick={shareApp}
+        className="mt-5 w-full rounded-2xl bg-more py-3.5 font-display text-lg tracking-wide text-ink transition active:scale-[0.98]"
+      >
+        {copied ? 'LINK COPIED ✓' : '📣 INVITE YOUR MATES'}
+      </button>
+
+      <button
         onClick={signOut}
-        className="mt-5 w-full rounded-2xl border border-line bg-panel2 py-3 text-sm font-bold text-mist transition active:scale-[0.98] hover:text-less"
+        className="mt-3 w-full rounded-2xl border border-line bg-panel2 py-3 text-sm font-bold text-mist transition active:scale-[0.98] hover:text-less"
       >
         Sign out
       </button>
