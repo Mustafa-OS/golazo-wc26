@@ -6,6 +6,13 @@ const TABS = [
   { id: 'group', label: 'Groups' },
 ];
 
+// Gold / silver / bronze podium styling (static strings for Tailwind purge).
+const PODIUM = {
+  1: { border: 'border-gold', text: 'text-gold', bt: 'border-t-gold', from: 'from-gold/10' },
+  2: { border: 'border-mist', text: 'text-mist', bt: 'border-t-mist', from: 'from-mist/10' },
+  3: { border: 'border-flame', text: 'text-flame', bt: 'border-t-flame', from: 'from-flame/10' },
+};
+
 export default function LeaderboardPage({ rows, weekly = [], meUid, groups = [] }) {
   const [scope, setScope] = useState('imperial');
   const allTime = [...rows].sort((a, b) => b.points - a.points);
@@ -59,16 +66,17 @@ function Board({ sorted, meUid }) {
         {[top3[1], top3[0], top3[2]].filter(Boolean).map((u) => {
           const rank = u === top3[0] ? 1 : u === top3[1] ? 2 : 3;
           const h = rank === 1 ? 'h-24' : rank === 2 ? 'h-20' : 'h-16';
-          const ring = rank === 1 ? 'border-gold' : 'border-line';
+          // Full static class strings so Tailwind's purge keeps them.
+          const s = PODIUM[rank];
           return (
             <div key={u.uid} className="flex flex-col items-center">
-              <div className={`mb-1 flex h-12 w-12 items-center justify-center rounded-full border-2 ${ring} bg-panel2 text-lg font-extrabold`}>
+              <div className={`mb-1 flex h-12 w-12 items-center justify-center rounded-full border-2 bg-panel2 text-lg font-extrabold ${s.border} ${s.text}`}>
                 {u.name?.[0] || '?'}
               </div>
-              <div className="text-xs font-bold">{u.name}</div>
+              <div className="truncate text-xs font-bold">{u.name}</div>
               <div className="font-display text-lg text-gold">{u.points}</div>
-              <div className={`mt-1 w-full rounded-t-xl border border-line bg-panel ${h} flex items-start justify-center pt-1.5`}>
-                <span className="font-display text-2xl text-mist">{rank}</span>
+              <div className={`mt-1 flex w-full items-start justify-center rounded-t-xl border border-line border-t-2 bg-gradient-to-b to-transparent ${h} pt-1.5 ${s.bt} ${s.from}`}>
+                <span className={`font-display text-2xl ${s.text}`}>{rank}</span>
               </div>
             </div>
           );
@@ -89,8 +97,7 @@ function GroupBoards({ groups, sorted, meUid }) {
   if (groups.length === 0) {
     return (
       <div className="mt-8 flex flex-col items-center justify-center px-6 text-center">
-        <div className="text-5xl">👥</div>
-        <h2 className="mt-3 font-display text-xl">GROUP BOARDS</h2>
+        <h2 className="font-display text-xl">GROUP BOARDS</h2>
         <p className="mt-2 max-w-xs text-sm font-semibold text-mist">
           Join or create a group on the <span className="text-more">Groups</span> tab to battle your
           course, halls, or society on a private board.
@@ -132,8 +139,7 @@ function GroupBoards({ groups, sorted, meUid }) {
 function EmptyBoard({ text }) {
   return (
     <div className="mt-8 flex flex-col items-center justify-center px-6 text-center">
-      <div className="text-5xl">📅</div>
-      <p className="mt-3 max-w-xs text-sm font-semibold text-mist">{text}</p>
+      <p className="max-w-xs text-sm font-semibold text-mist">{text}</p>
     </div>
   );
 }

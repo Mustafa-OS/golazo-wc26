@@ -43,10 +43,10 @@ export default function Profile({ rows }) {
   const rank = sorted.findIndex((r) => r.uid === user.uid) + 1;
 
   const stats = [
-    { label: 'Total Points', value: user.points || 0, accent: 'text-gold' },
-    { label: 'Imperial Rank', value: rank ? `#${rank}` : '—', accent: 'text-more' },
-    { label: 'Day Streak', value: user.streak || 0, accent: 'text-flame' },
-    { label: 'Hit Rate', value: user.hitRate ? `${user.hitRate}%` : '—', accent: 'text-white' },
+    { label: 'Total Points', value: user.points || 0, accent: 'text-gold', ring: 'ring-gold/40' },
+    { label: 'Imperial Rank', value: rank ? `#${rank}` : '—', accent: 'text-azure', ring: 'ring-azure/40' },
+    { label: 'Day Streak', value: user.streak || 0, accent: 'text-flame', ring: 'ring-flame/40' },
+    { label: 'Hit Rate', value: user.hitRate ? `${user.hitRate}%` : '—', accent: 'text-grape', ring: 'ring-grape/40' },
   ];
 
   return (
@@ -63,7 +63,7 @@ export default function Profile({ rows }) {
 
       <div className="mt-5 grid grid-cols-2 gap-3">
         {stats.map((s) => (
-          <div key={s.label} className="rounded-2xl border border-line bg-panel p-4">
+          <div key={s.label} className={`rounded-2xl border border-line bg-panel p-4 ring-1 ${s.ring}`}>
             <div className="text-[11px] font-bold uppercase tracking-wide text-mist">{s.label}</div>
             <div className={`mt-1 font-display text-3xl ${s.accent}`}>{s.value}</div>
           </div>

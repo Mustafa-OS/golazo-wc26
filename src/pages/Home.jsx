@@ -14,16 +14,14 @@ function countdown(iso) {
   return `in ${m}m`;
 }
 
-// Festive confetti scattered behind the hero.
+// Festive confetti — kept in the empty top-right so it never sits over text.
 const CONFETTI = [
-  ['bg-gold', 'left-[8%] top-[18%] rotate-12'],
-  ['bg-azure', 'left-[26%] top-[60%] -rotate-12'],
-  ['bg-more', 'left-[44%] top-[12%] rotate-45'],
-  ['bg-flame', 'left-[62%] top-[68%] rotate-6'],
-  ['bg-grape', 'left-[78%] top-[24%] -rotate-12'],
-  ['bg-less', 'left-[90%] top-[56%] rotate-12'],
-  ['bg-azure', 'left-[16%] top-[80%] rotate-45'],
-  ['bg-gold', 'left-[70%] top-[8%] -rotate-6'],
+  ['bg-gold', 'right-[6%] top-[16%] rotate-12'],
+  ['bg-grape', 'right-[17%] top-[44%] -rotate-12'],
+  ['bg-azure', 'right-[27%] top-[14%] rotate-45'],
+  ['bg-flame', 'right-[9%] top-[56%] rotate-6'],
+  ['bg-more', 'right-[22%] top-[30%] rotate-12'],
+  ['bg-less', 'right-[4%] top-[40%] -rotate-6'],
 ];
 
 export default function Home({ matches = [], rows = [], count = 0, max = 5, onGoToday, onInvite }) {

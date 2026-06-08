@@ -15,7 +15,7 @@ function computeScored(picks, mode) {
 
 export default function PickSlip({
   picks, max, locked, mode = 'normal', captainId = null,
-  onSetMode, onSetCaptain, onRemove, onSave, onClose,
+  onSetMode, onSetCaptain, onRemove, onClear, onSave, onClose,
 }) {
   const [shared, setShared] = useState('');
   const [saved, setSaved] = useState(false);
@@ -219,9 +219,15 @@ export default function PickSlip({
           <span className="font-display text-3xl text-gold">{anySettled ? scored : potential} pts</span>
         </div>
 
+        {editable && picks.length > 0 && (
+          <button onClick={onClear} className="mt-2 w-full text-center text-[11px] font-bold text-mist transition hover:text-less">
+            Clear slip
+          </button>
+        )}
+
         {!anySettled && !locked && needsTwoTeams && (
           <div className="mt-3 rounded-xl border border-flame/40 bg-flame/10 px-3 py-2 text-center text-xs font-bold text-flame">
-            Pick players from at least 2 different teams to save.
+            Pick players from at least 2 different countries to save.
           </div>
         )}
 

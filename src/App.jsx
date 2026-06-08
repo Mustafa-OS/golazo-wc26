@@ -74,6 +74,13 @@ function MainApp() {
   const [captainId, setCaptainId] = useState(null);
   const [groups, setGroups] = useState([]);
   const [showHelp, setShowHelp] = useState(false);
+  const [toast, setToast] = useState('');
+  const toastTimer = useRef(null);
+  const notify = (msg) => {
+    setToast(msg);
+    clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(''), 2600);
+  };
 
   // Open the how-to-play as a popup first thing each app session (reopenable
   // anytime via the header info button).
@@ -184,16 +191,30 @@ function MainApp() {
       // player (a different metric) before adding the new one.
       const hadPlayer = prev.some((p) => p.playerId === prop.playerId);
       const without = prev.filter((p) => p.playerId !== prop.playerId);
-      if (!hadPlayer && without.length >= MAX_PICKS) return prev; // capped (adding a new player)
+      if (!hadPlayer && without.length >= MAX_PICKS) { notify('That’s your 5 — remove one to swap.'); return prev; }
+      const next = [...without, { ...prop, side, value: pickValue(prop, side) }];
+      // RULE: a full slip must span at least 2 different countries — block a 5th
+      // pick that would leave every pick on the same nation.
+      if (next.length >= MAX_PICKS && new Set(next.map((p) => p.teamCode)).size < 2) {
+        notify('Your slip needs at least 2 different countries.');
+        return prev;
+      }
       // Freeze the points value at selection time so later baseline changes
       // can't retroactively alter a locked slip.
-      return [...without, { ...prop, side, value: pickValue(prop, side) }];
+      return next;
     });
   }
 
   function removePick(propId) {
     if (effectiveLocked) return;
     setPicks((prev) => prev.filter((p) => p.id !== propId));
+  }
+
+  function clearSlip() {
+    if (effectiveLocked) return;
+    clearTimeout(draftTimer.current);
+    setPicks([]); setMode('normal'); setCaptainId(null);
+    if (activeMdKey) writeSlip(user.uid, activeMdKey, { picks: [], locked: false, mode: 'normal', captainId: null }).catch(() => {});
   }
 
   function changeMode(m) {
@@ -277,12 +298,19 @@ function MainApp() {
           onSetMode={changeMode}
           onSetCaptain={toggleCaptain}
           onRemove={removePick}
+          onClear={clearSlip}
           onSave={saveSlip}
           onClose={() => setSlipOpen(false)}
         />
       )}
 
       {showHelp && <HowToPlay onClose={() => setShowHelp(false)} />}
+
+      {toast && (
+        <div className="pointer-events-none fixed inset-x-0 bottom-24 z-40 flex justify-center px-6">
+          <div className="rounded-full bg-flame px-4 py-2 text-center text-sm font-bold text-ink shadow-lg">{toast}</div>
+        </div>
+      )}
 
       <BottomNav tab={tab} setTab={setTab} />
     </div>

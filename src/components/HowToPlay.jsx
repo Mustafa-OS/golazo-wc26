@@ -2,7 +2,7 @@ import React from 'react';
 
 const STEPS = [
   { title: 'Pick a player line', body: 'Open a match day, tap a game, then tap MORE or LESS on a player’s line (goals, shots, saves…).' },
-  { title: 'Best 5 per match day', body: 'Up to 5 picks a match day — from at least two different teams, one pick per player.' },
+  { title: 'Best 5 per match day', body: 'Up to 5 picks a match day — from at least two different countries, and one pick per player.' },
   { title: 'Boost it (optional)', body: 'Make one pick your Captain for 2×, or go Power Play — all picks must land for a big multiplier.' },
   { title: 'Save — it auto-locks', body: 'Your slip saves to your account and locks automatically 30 min before the first kickoff.' },
   { title: 'Win points & climb', body: 'Rarer calls pay more. Wrong picks score 0 — never negative. Streaks add up to +50%. Race the Imperial board or a private group.' },
