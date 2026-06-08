@@ -64,6 +64,8 @@ function MainApp() {
   const [picks, setPicks] = useState([]); // [{ ...prop, side, value }]
   const [slipOpen, setSlipOpen] = useState(false);
   const [locked, setLocked] = useState(false);
+  const [mode, setMode] = useState('normal'); // 'normal' | 'power'
+  const [captainId, setCaptainId] = useState(null);
   const [groups, setGroups] = useState([]);
   const day = useMemo(() => todayKey(), []);
   const loadedRef = useRef(false);
@@ -80,6 +82,8 @@ function MainApp() {
       if (!slip) { loadedRef.current = true; return; }
       if (!loadedRef.current) {
         setPicks(slip.picks || []);
+        setMode(slip.mode || 'normal');
+        setCaptainId(slip.captainId || null);
         loadedRef.current = true;
       }
       setLocked((prev) => prev || !!slip.locked);
@@ -95,21 +99,27 @@ function MainApp() {
   const kickedOff = earliestKickoff != null && Date.now() >= earliestKickoff;
   const effectiveLocked = locked || kickedOff;
 
-  // Persist a draft (debounced) whenever picks change while still editable.
+  // Keep the captain valid: clear it in power mode or if its pick was removed.
+  useEffect(() => {
+    if (mode === 'power' && captainId) setCaptainId(null);
+    else if (captainId && !picks.some((p) => p.id === captainId)) setCaptainId(null);
+  }, [picks, mode, captainId]);
+
+  // Persist a draft (debounced) whenever the slip changes while still editable.
   useEffect(() => {
     if (!loadedRef.current || effectiveLocked || picks.length === 0) return;
     clearTimeout(draftTimer.current);
     draftTimer.current = setTimeout(() => {
-      writeSlip(user.uid, day, { picks, locked: false }).catch((e) => console.error('draft save', e));
+      writeSlip(user.uid, day, { picks, locked: false, mode, captainId }).catch((e) => console.error('draft save', e));
     }, 700);
     return () => clearTimeout(draftTimer.current);
-  }, [picks, effectiveLocked, user.uid, day]);
+  }, [picks, effectiveLocked, user.uid, day, mode, captainId]);
 
   // If a match kicks off while the slip is open, latch it locked in storage.
   useEffect(() => {
     if (kickedOff && !locked && picks.length > 0) {
       setLocked(true);
-      writeSlip(user.uid, day, { picks, locked: true }).catch((e) => console.error('auto-lock', e));
+      writeSlip(user.uid, day, { picks, locked: true, mode, captainId }).catch((e) => console.error('auto-lock', e));
     }
   }, [kickedOff]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -148,12 +158,21 @@ function MainApp() {
     setPicks((prev) => prev.filter((p) => p.id !== propId));
   }
 
+  function changeMode(m) {
+    if (effectiveLocked) return;
+    setMode(m);
+  }
+  function toggleCaptain(propId) {
+    if (effectiveLocked || mode === 'power') return;
+    setCaptainId((prev) => (prev === propId ? null : propId));
+  }
+
   async function lockSlip() {
     if (picks.length === 0 || effectiveLocked) return;
     clearTimeout(draftTimer.current); // don't let a pending draft race the lock
     setLocked(true);
     try {
-      await writeSlip(user.uid, day, { picks, locked: true });
+      await writeSlip(user.uid, day, { picks, locked: true, mode, captainId });
     } catch (e) {
       console.error('lock slip', e);
       setLocked(false); // let them retry if the write failed
@@ -196,6 +215,10 @@ function MainApp() {
           picks={picks}
           max={MAX_PICKS}
           locked={effectiveLocked}
+          mode={mode}
+          captainId={captainId}
+          onSetMode={changeMode}
+          onSetCaptain={toggleCaptain}
           onRemove={removePick}
           onLock={lockSlip}
           onClose={() => setSlipOpen(false)}

@@ -1,17 +1,34 @@
 import React, { useState } from 'react';
+import { slipPotential, powerMultiplier } from '../lib/scoringEngine.js';
 
-export default function PickSlip({ picks, max, locked, onRemove, onLock, onClose }) {
+// Actual settled payout for the results view (mirrors settleSlip's base points).
+function computeScored(picks, mode) {
+  if (mode === 'power') {
+    const live = picks.filter((p) => !p.void);
+    const allHit = live.length > 0 && live.every((p) => p.correct);
+    return allHit ? Math.round(live.reduce((s, p) => s + p.value, 0) * powerMultiplier(live.length)) : 0;
+  }
+  return picks.reduce((s, p) => s + (p.awarded ?? 0), 0);
+}
+
+export default function PickSlip({
+  picks, max, locked, mode = 'normal', captainId = null,
+  onSetMode, onSetCaptain, onRemove, onLock, onClose,
+}) {
   const [shared, setShared] = useState(false);
-  const potential = picks.reduce((s, p) => s + p.value, 0);
   const anySettled = picks.some((p) => p.correct !== undefined);
-  const scored = picks.reduce((s, p) => s + (p.awarded ?? 0), 0);
+  const editable = !locked && !anySettled;
+  const potential = slipPotential(picks, { mode, captainId });
+  const scored = computeScored(picks, mode);
+  const isPower = mode === 'power';
 
   async function shareSlip() {
     const url = window.location.origin + window.location.pathname;
     const lines = picks.map(
-      (p) => `${p.side === 'MORE' ? '▲' : '▼'} ${p.playerName} ${p.side} ${p.label} ${p.line}`
+      (p) => `${p.side === 'MORE' ? '▲' : '▼'} ${p.playerName} ${p.side} ${p.label} ${p.line}${captainId === p.id ? ' (★C)' : ''}`
     );
-    const text = `My OVER. slip 🔥\n${lines.join('\n')}\nMax ${potential} pts · play: ${url}`;
+    const tag = isPower ? '⚡ POWER PLAY' : 'My OVER. slip';
+    const text = `${tag} 🔥\n${lines.join('\n')}\nMax ${potential} pts · play: ${url}`;
     try {
       if (navigator.share) await navigator.share({ title: 'My OVER. slip', text });
       else {
@@ -49,15 +66,49 @@ export default function PickSlip({ picks, max, locked, onRemove, onLock, onClose
           </div>
         </div>
 
+        {/* mode toggle (editable only) */}
+        {editable && picks.length > 0 && (
+          <div className="mb-3">
+            <div className="grid grid-cols-2 gap-1 rounded-xl bg-panel2 p-1">
+              {[{ id: 'normal', label: 'Normal' }, { id: 'power', label: '⚡ Power Play' }].map((m) => (
+                <button
+                  key={m.id}
+                  onClick={() => onSetMode(m.id)}
+                  className={`rounded-lg py-2 text-sm font-bold transition ${
+                    mode === m.id ? 'bg-more text-ink' : 'text-mist'
+                  }`}
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
+            <p className="mt-2 px-1 text-[11px] font-semibold text-mist">
+              {isPower ? (
+                <>⚡ All {picks.length} must land for <span className="text-gold">{powerMultiplier(picks.length)}×</span> — one miss pays 0. (DNP picks are ignored.)</>
+              ) : (
+                <>Tap ☆ to make a pick your <span className="text-gold">Captain</span> — it pays 2× if it lands.</>
+              )}
+            </p>
+          </div>
+        )}
+
+        {/* locked/results mode banner */}
+        {!editable && isPower && (
+          <div className="mb-3 rounded-xl border border-gold/40 bg-gold/10 px-3 py-2 text-center text-xs font-bold text-gold">
+            ⚡ POWER PLAY · all picks must land
+          </div>
+        )}
+
         {picks.length === 0 ? (
           <p className="py-10 text-center text-sm text-mist">
             No picks yet. Tap <span className="text-more">MORE</span> or{' '}
             <span className="text-less">LESS</span> on a prop to start your slip.
           </p>
         ) : (
-          <div className="max-h-[45vh] space-y-2 overflow-y-auto">
+          <div className="max-h-[42vh] space-y-2 overflow-y-auto">
             {picks.map((p) => {
               const isSettled = p.correct !== undefined;
+              const isCap = !isPower && (captainId === p.id || p.captain);
               return (
                 <div
                   key={p.id}
@@ -68,7 +119,9 @@ export default function PickSlip({ picks, max, locked, onRemove, onLock, onClose
                         : p.correct
                           ? 'border-more/50'
                           : 'border-less/40 opacity-70'
-                      : 'border-line'
+                      : isCap
+                        ? 'border-gold/50'
+                        : 'border-line'
                   }`}
                 >
                   <div className="flex items-center gap-2.5 leading-tight">
@@ -77,8 +130,23 @@ export default function PickSlip({ picks, max, locked, onRemove, onLock, onClose
                         {p.void ? '—' : p.correct ? '✓' : '✗'}
                       </span>
                     )}
+                    {/* captain star (editable, normal mode) */}
+                    {editable && !isPower && (
+                      <button
+                        onClick={() => onSetCaptain(p.id)}
+                        aria-label="Make captain"
+                        className={`text-lg leading-none transition ${captainId === p.id ? 'text-gold' : 'text-mist hover:text-gold'}`}
+                      >
+                        {captainId === p.id ? '★' : '☆'}
+                      </button>
+                    )}
                     <div>
-                      <div className="text-sm font-bold">{p.playerName}</div>
+                      <div className="flex items-center gap-1.5 text-sm font-bold">
+                        {p.playerName}
+                        {isCap && (
+                          <span className="rounded bg-gold/20 px-1.5 text-[10px] font-extrabold text-gold">★ 2×</span>
+                        )}
+                      </div>
                       <div className="text-[11px] font-semibold text-mist">
                         <span className={p.side === 'MORE' ? 'text-more' : 'text-less'}>
                           {p.side === 'MORE' ? '▲ MORE' : '▼ LESS'}
@@ -93,6 +161,10 @@ export default function PickSlip({ picks, max, locked, onRemove, onLock, onClose
                         <span className="rounded bg-panel px-1.5 py-0.5 text-[10px] font-bold uppercase text-mist">
                           Void · didn’t play
                         </span>
+                      ) : isPower ? (
+                        <span className={`text-sm font-extrabold ${p.correct ? 'text-more' : 'text-less'}`}>
+                          {p.correct ? 'HIT' : 'MISS'}
+                        </span>
                       ) : (
                         <span className={`font-display text-lg ${p.correct ? 'text-more' : 'text-mist'}`}>
                           +{p.awarded ?? 0}
@@ -100,7 +172,9 @@ export default function PickSlip({ picks, max, locked, onRemove, onLock, onClose
                       )
                     ) : (
                       <>
-                        <span className="font-display text-lg text-gold">+{p.value}</span>
+                        <span className="font-display text-lg text-gold">
+                          +{isCap ? p.value * 2 : p.value}
+                        </span>
                         {!locked && (
                           <button
                             onClick={() => onRemove(p.id)}
@@ -120,7 +194,9 @@ export default function PickSlip({ picks, max, locked, onRemove, onLock, onClose
         )}
 
         <div className="mt-4 flex items-center justify-between rounded-2xl border border-line bg-panel2 px-4 py-3">
-          <span className="text-sm font-semibold text-mist">{anySettled ? 'You scored' : 'Max potential'}</span>
+          <span className="text-sm font-semibold text-mist">
+            {anySettled ? 'You scored' : isPower ? `If all land (${powerMultiplier(picks.length)}×)` : 'Max potential'}
+          </span>
           <span className="font-display text-3xl text-gold">{anySettled ? scored : potential} pts</span>
         </div>
 
@@ -134,7 +210,7 @@ export default function PickSlip({ picks, max, locked, onRemove, onLock, onClose
             onClick={() => { onLock(); onClose(); }}
             className="mt-3 w-full rounded-2xl bg-more py-3.5 font-display text-lg tracking-wide text-ink transition active:scale-[0.98] disabled:opacity-40"
           >
-            LOCK SLIP
+            {isPower ? 'LOCK POWER SLIP ⚡' : 'LOCK SLIP'}
           </button>
         )}
 

@@ -40,9 +40,15 @@ export function subscribeSlip(uid, day, cb) {
   return () => unsub();
 }
 
-export async function writeSlip(uid, day, { picks, locked }) {
+export async function writeSlip(uid, day, { picks, locked, mode = 'normal', captainId = null }) {
   const matchIds = [...new Set(picks.map((p) => p.matchId))];
-  const payload = { uid, day, matchIds, picks, locked: !!locked, updatedAt: Date.now() };
+  const payload = {
+    uid, day, matchIds, picks,
+    mode,
+    captainId: mode === 'power' ? null : captainId, // captain only applies in normal mode
+    locked: !!locked,
+    updatedAt: Date.now(),
+  };
   if (locked) payload.lockedAt = Date.now();
 
   if (MOCK_MODE) {
