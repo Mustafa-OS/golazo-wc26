@@ -14,15 +14,17 @@ import GroupsPage from './pages/GroupsPage.jsx';
 import Profile from './pages/Profile.jsx';
 import PickSlip from './components/PickSlip.jsx';
 import HowToPlay from './components/HowToPlay.jsx';
+import Pitch from './components/Pitch.jsx';
+import { IconHome, IconBall, IconTrophy, IconUsers, IconUser, IconInfo } from './components/Icons.jsx';
 
 const MAX_PICKS = 5;
 
 const NAV = [
-  { id: 'home', label: 'Home', icon: '🏠' },
-  { id: 'today', label: 'Matches', icon: '⚽' },
-  { id: 'board', label: 'Board', icon: '🏆' },
-  { id: 'groups', label: 'Groups', icon: '👥' },
-  { id: 'me', label: 'Profile', icon: '👤' },
+  { id: 'home', label: 'Home', Icon: IconHome },
+  { id: 'today', label: 'Matches', Icon: IconBall },
+  { id: 'board', label: 'Board', Icon: IconTrophy },
+  { id: 'groups', label: 'Groups', Icon: IconUsers },
+  { id: 'me', label: 'Profile', Icon: IconUser },
 ];
 
 export default function App() {
@@ -73,11 +75,12 @@ function MainApp() {
   const [groups, setGroups] = useState([]);
   const [showHelp, setShowHelp] = useState(false);
 
-  // Show the how-to-play once on first run; reopenable via the header ⓘ.
+  // Open the how-to-play as a popup first thing each app session (reopenable
+  // anytime via the header info button).
   useEffect(() => {
-    if (!localStorage.getItem('golazo.seenIntro')) {
+    if (!sessionStorage.getItem('golazo.seenIntro')) {
       setShowHelp(true);
-      localStorage.setItem('golazo.seenIntro', '1');
+      sessionStorage.setItem('golazo.seenIntro', '1');
     }
   }, []);
   const loadedRef = useRef(false);
@@ -175,10 +178,13 @@ function MainApp() {
     if (effectiveLocked) return;
     setPicks((prev) => {
       const existing = prev.find((p) => p.id === prop.id);
-      // Tapping the same side again removes the pick.
+      // Tapping the same metric+side again removes the pick.
       if (existing && existing.side === side) return prev.filter((p) => p.id !== prop.id);
-      const without = prev.filter((p) => p.id !== prop.id);
-      if (without.length >= MAX_PICKS && !existing) return prev; // capped
+      // RULE: one pick per player per game — drop any existing pick for this
+      // player (a different metric) before adding the new one.
+      const hadPlayer = prev.some((p) => p.playerId === prop.playerId);
+      const without = prev.filter((p) => p.playerId !== prop.playerId);
+      if (!hadPlayer && without.length >= MAX_PICKS) return prev; // capped (adding a new player)
       // Freeze the points value at selection time so later baseline changes
       // can't retroactively alter a locked slip.
       return [...without, { ...prop, side, value: pickValue(prop, side) }];
@@ -213,7 +219,14 @@ function MainApp() {
 
   return (
     <div className="mx-auto flex min-h-full max-w-md flex-col">
-      <Header picks={picks} max={MAX_PICKS} onOpenSlip={() => setSlipOpen(true)} onHelp={() => setShowHelp(true)} />
+      <Pitch />
+      <Header
+        picks={picks}
+        max={MAX_PICKS}
+        onOpenSlip={() => setSlipOpen(true)}
+        onHelp={() => setShowHelp(true)}
+        onHome={() => setTab('home')}
+      />
 
       <main className="flex-1 px-4 pb-28 pt-2">
         {tab === 'home' && (
@@ -276,24 +289,24 @@ function MainApp() {
   );
 }
 
-function Header({ picks, max, onOpenSlip, onHelp }) {
+function Header({ picks, max, onOpenSlip, onHelp, onHome }) {
   return (
     <header className="sticky top-0 z-20 flex items-center justify-between border-b border-line bg-ink/85 px-4 py-3 backdrop-blur">
-      <div className="leading-none">
+      <button onClick={onHome} aria-label="Home" className="text-left leading-none transition active:scale-95">
         <div className="font-display text-2xl tracking-wide">
           GOLAZO<span className="text-more">.</span>
         </div>
         <div className="-mt-0.5 text-[10px] font-semibold uppercase tracking-[0.25em] text-mist">
           Imperial · WC26
         </div>
-      </div>
+      </button>
       <div className="flex items-center gap-2">
         <button
           onClick={onHelp}
           aria-label="How to play"
-          className="flex h-9 w-9 items-center justify-center rounded-full border border-line bg-panel2 text-base font-bold text-mist transition active:scale-95 hover:text-white"
+          className="flex h-9 w-9 items-center justify-center rounded-full border border-line bg-panel2 text-mist transition active:scale-95 hover:text-white"
         >
-          ⓘ
+          <IconInfo size={18} />
         </button>
         <button
           onClick={onOpenSlip}
@@ -326,8 +339,7 @@ function TodaySkeleton() {
 function EmptyToday() {
   return (
     <div className="flex flex-col items-center justify-center px-6 py-20 text-center">
-      <div className="text-5xl">🗓️</div>
-      <h2 className="mt-4 font-display text-2xl">NO MATCHES YET</h2>
+      <h2 className="font-display text-2xl">NO MATCHES YET</h2>
       <p className="mt-2 max-w-xs text-sm font-semibold text-mist">
         Today’s lines drop every morning at 08:00 once fixtures and lineups are in.
         Check back then to build your slip.
@@ -344,11 +356,11 @@ function BottomNav({ tab, setTab }) {
           <button
             key={n.id}
             onClick={() => setTab(n.id)}
-            className={`flex flex-col items-center gap-1 py-3 text-[11px] font-bold uppercase tracking-wide transition ${
+            className={`flex flex-col items-center gap-1 py-2.5 text-[10px] font-bold uppercase tracking-wide transition ${
               tab === n.id ? 'text-more' : 'text-mist'
             }`}
           >
-            <span className="text-lg">{n.icon}</span>
+            <n.Icon size={20} />
             {n.label}
           </button>
         ))}

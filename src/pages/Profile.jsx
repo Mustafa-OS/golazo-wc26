@@ -45,7 +45,7 @@ export default function Profile({ rows }) {
   const stats = [
     { label: 'Total Points', value: user.points || 0, accent: 'text-gold' },
     { label: 'Imperial Rank', value: rank ? `#${rank}` : '—', accent: 'text-more' },
-    { label: 'Day Streak', value: `🔥 ${user.streak || 0}`, accent: 'text-white' },
+    { label: 'Day Streak', value: user.streak || 0, accent: 'text-flame' },
     { label: 'Hit Rate', value: user.hitRate ? `${user.hitRate}%` : '—', accent: 'text-white' },
   ];
 
@@ -98,7 +98,7 @@ export default function Profile({ rows }) {
         onClick={shareApp}
         className="mt-3 w-full rounded-2xl bg-more py-3.5 font-display text-lg tracking-wide text-ink transition active:scale-[0.98]"
       >
-        {copied ? 'LINK COPIED ✓' : '📣 INVITE YOUR MATES'}
+        {copied ? 'LINK COPIED' : 'INVITE YOUR MATES'}
       </button>
 
       <button

@@ -11,7 +11,7 @@ export default function GroupsPage({ groups, onCreate, onJoin }) {
     setBusy(true); setMsg(null);
     try {
       const res = await onJoin(code);
-      setMsg({ kind: 'ok', text: `Joined ${res?.name || 'the group'}! 🎉` });
+      setMsg({ kind: 'ok', text: `Joined ${res?.name || 'the group'}!` });
       setCode('');
     } catch (e) {
       setMsg({ kind: 'err', text: e.message || 'Could not join that group.' });

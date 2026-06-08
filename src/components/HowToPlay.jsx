@@ -1,11 +1,11 @@
 import React from 'react';
 
 const STEPS = [
-  { icon: '⚽', title: 'Pick a player line', body: 'Browse a match and tap MORE or LESS on a player’s line (goals, shots, saves…).' },
-  { icon: '🔒', title: 'Lock your best 5', body: 'Add up to 5 picks a day and lock your slip. Picks also lock automatically at kickoff.' },
-  { icon: '⚡', title: 'Boost it (optional)', body: 'Make one pick your Captain for 2×, or go Power Play — all picks must land for a big multiplier.' },
-  { icon: '🏆', title: 'Win points', body: 'Rarer calls pay more. Wrong picks score 0 — never negative. A daily streak adds up to +50%.' },
-  { icon: '👥', title: 'Climb the board', body: 'Race the all-Imperial leaderboard, or start a private group for your course / halls / society.' },
+  { title: 'Pick a player line', body: 'Open a match day, tap a game, then tap MORE or LESS on a player’s line (goals, shots, saves…).' },
+  { title: 'Best 5 per match day', body: 'Up to 5 picks a match day — from at least two different teams, one pick per player.' },
+  { title: 'Boost it (optional)', body: 'Make one pick your Captain for 2×, or go Power Play — all picks must land for a big multiplier.' },
+  { title: 'Save — it auto-locks', body: 'Your slip saves to your account and locks automatically 30 min before the first kickoff.' },
+  { title: 'Win points & climb', body: 'Rarer calls pay more. Wrong picks score 0 — never negative. Streaks add up to +50%. Race the Imperial board or a private group.' },
 ];
 
 export default function HowToPlay({ onClose }) {
@@ -27,11 +27,11 @@ export default function HowToPlay({ onClose }) {
         <div className="mt-5 space-y-2.5">
           {STEPS.map((s, i) => (
             <div key={s.title} className="flex items-start gap-3 rounded-2xl border border-line bg-panel2 px-4 py-3">
-              <span className="text-2xl leading-none">{s.icon}</span>
+              <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-more text-xs font-extrabold text-ink">
+                {i + 1}
+              </span>
               <div className="leading-tight">
-                <div className="text-sm font-bold">
-                  <span className="text-more">{i + 1}.</span> {s.title}
-                </div>
+                <div className="text-sm font-bold">{s.title}</div>
                 <div className="mt-0.5 text-[13px] font-medium text-mist">{s.body}</div>
               </div>
             </div>
@@ -39,7 +39,7 @@ export default function HowToPlay({ onClose }) {
         </div>
 
         <p className="mt-4 text-center text-[12px] font-semibold text-mist">
-          No money. No betting. Just bragging rights. 🏆
+          No money. No betting. Just bragging rights.
         </p>
 
         <button

@@ -155,8 +155,8 @@ function Row({ rank, u, meUid }) {
       </div>
       <div className="flex items-center gap-3">
         {u.streak > 0 && (
-          <span className="rounded-full bg-panel2 px-2 py-0.5 text-[11px] font-bold text-gold">
-            🔥 {u.streak}
+          <span className="rounded-full bg-flame/15 px-2 py-0.5 text-[11px] font-bold text-flame">
+            {u.streak}-day
           </span>
         )}
         <span className="font-display text-xl text-gold">{u.points}</span>

@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 
 const PERKS = [
-  { icon: '⚽', text: 'Tap MORE / LESS on real World Cup player lines' },
-  { icon: '🔒', text: 'Lock your best 5 picks a day — no money, just points' },
-  { icon: '🏆', text: 'Climb the all-Imperial board or a private group' },
+  'Tap MORE / LESS on real World Cup player lines',
+  'Best 5 picks a match day — no money, just points',
+  'Climb the all-Imperial board or a private group',
 ];
 
 export default function AuthScreen() {
@@ -54,9 +54,9 @@ export default function AuthScreen() {
       {/* perks */}
       <div className="mt-7 space-y-2.5">
         {PERKS.map((p) => (
-          <div key={p.text} className="flex items-center gap-3 rounded-2xl border border-line bg-panel px-4 py-3">
-            <span className="text-xl">{p.icon}</span>
-            <span className="text-sm font-semibold text-mist">{p.text}</span>
+          <div key={p} className="flex items-center gap-3 rounded-2xl border border-line bg-panel px-4 py-3">
+            <span className="h-2.5 w-2.5 shrink-0 rounded-[2px] bg-more" />
+            <span className="text-sm font-semibold text-mist">{p}</span>
           </div>
         ))}
       </div>

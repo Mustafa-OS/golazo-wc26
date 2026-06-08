@@ -8,7 +8,7 @@ import { subscribeSlip } from '../lib/slipStore.js';
 const ukTime = (iso) => new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 function relKickoff(iso) {
   const ms = new Date(iso).getTime() - Date.now();
-  if (ms <= 0) return { live: true, text: '🔴 LIVE' };
+  if (ms <= 0) return { live: true, text: 'LIVE' };
   const h = Math.floor(ms / 3.6e6);
   const m = Math.floor((ms % 3.6e6) / 6e4);
   if (h >= 24) return { text: `${ukTime(iso)} UK` };
@@ -53,10 +53,7 @@ export default function Today({ matches, pickFor, onPick, max, count, locked, ui
   const list = matchdays.filter((d) => d.status === tab);
   return (
     <div>
-      <div className="mt-2 flex items-end justify-between">
-        <h1 className="font-display text-3xl">MATCH DAYS</h1>
-        <span className="pb-1 text-2xl">⚽</span>
-      </div>
+      <h1 className="mt-2 font-display text-3xl">MATCH DAYS</h1>
       <SlipBar count={count} max={max} />
 
       <div className="mt-3 grid grid-cols-3 gap-1 rounded-xl bg-panel2 p-1">
@@ -106,7 +103,7 @@ function MatchdayCard({ d, onPick }) {
           <div className="mt-1 text-xs font-semibold text-mist">{d.label}</div>
         </div>
         <span className={`rounded-full px-3 py-1 text-xs font-bold ${locked ? 'bg-panel2 text-mist' : prev ? 'bg-gold/15 text-gold' : 'bg-more/15 text-more'}`}>
-          {locked ? '🔒 Locked' : prev ? 'Results ›' : `${d.games.length} ${d.games.length === 1 ? 'game' : 'games'} ›`}
+          {locked ? 'Locked' : prev ? 'Results ›' : `${d.games.length} ${d.games.length === 1 ? 'game' : 'games'} ›`}
         </span>
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-1.5">
@@ -233,9 +230,8 @@ function EmptyTab({ tab }) {
     ? 'No match days open right now — the next ones unlock 4 days out.'
     : tab === 'upcoming' ? 'No upcoming match days loaded yet.' : 'No finished match days yet.';
   return (
-    <div className="flex flex-col items-center justify-center px-6 py-20 text-center">
-      <div className="text-5xl">{tab === 'previous' ? '📋' : '🗓️'}</div>
-      <p className="mt-4 max-w-xs text-sm font-semibold text-mist">{msg}</p>
+    <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
+      <p className="max-w-xs text-sm font-semibold text-mist">{msg}</p>
     </div>
   );
 }
@@ -280,7 +276,7 @@ function MatchProps({ match, onBack, pickFor, onPick, max, count, locked }) {
 
       {locked ? (
         <div className="mt-2 flex items-center justify-between rounded-xl border border-gold/40 bg-gold/10 px-3 py-2">
-          <span className="text-xs font-bold text-gold">🔒 Locked — kickoff is near.</span>
+          <span className="text-xs font-bold text-gold">Locked — kickoff is near.</span>
           <span className="font-display text-lg text-gold">{count}/{max}</span>
         </div>
       ) : (

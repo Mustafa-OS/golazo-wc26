@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { slipPotential, powerMultiplier } from '../lib/scoringEngine.js';
 import { slipShareBlob } from '../lib/shareCard.js';
+import { IconLock } from './Icons.jsx';
 
 // Actual settled payout for the results view (mirrors settleSlip's base points).
 function computeScored(picks, mode) {
@@ -23,13 +24,16 @@ export default function PickSlip({
   const potential = slipPotential(picks, { mode, captainId });
   const scored = computeScored(picks, mode);
   const isPower = mode === 'power';
+  // Rule: a valid slip needs players from at least 2 different teams.
+  const teams = new Set(picks.map((p) => p.teamCode)).size;
+  const needsTwoTeams = picks.length > 0 && teams < 2;
 
   const [busyShare, setBusyShare] = useState(false);
 
   async function shareSlip() {
     const url = window.location.origin + window.location.pathname;
-    const tag = isPower ? '⚡ POWER PLAY' : 'My GOLAZO. slip';
-    const caption = `${tag} 🔥 — ${potential} pts on the line. Play: ${url}`;
+    const tag = isPower ? 'POWER PLAY' : 'My GOLAZO. slip';
+    const caption = `${tag} — ${potential} pts on the line. Play: ${url}`;
     setBusyShare(true);
     try {
       const blob = await slipShareBlob({ picks, potential, mode, captainId, url });
@@ -65,7 +69,7 @@ export default function PickSlip({
             {anySettled ? (
               <span className="rounded-full bg-gold/15 px-3 py-1 text-sm font-bold text-gold">RESULTS</span>
             ) : locked ? (
-              <span className="rounded-full bg-gold/15 px-3 py-1 text-sm font-bold text-gold">🔒 Locked</span>
+              <span className="flex items-center gap-1 rounded-full bg-gold/15 px-3 py-1 text-sm font-bold text-gold"><IconLock size={13} /> Locked</span>
             ) : (
               <span className="rounded-full bg-panel2 px-3 py-1 text-sm font-bold text-mist">
                 {picks.length}/{max}
@@ -85,7 +89,7 @@ export default function PickSlip({
         {editable && picks.length > 0 && (
           <div className="mb-3">
             <div className="grid grid-cols-2 gap-1 rounded-xl bg-panel2 p-1">
-              {[{ id: 'normal', label: 'Normal' }, { id: 'power', label: '⚡ Power Play' }].map((m) => (
+              {[{ id: 'normal', label: 'Normal' }, { id: 'power', label: 'Power Play' }].map((m) => (
                 <button
                   key={m.id}
                   onClick={() => onSetMode(m.id)}
@@ -99,7 +103,7 @@ export default function PickSlip({
             </div>
             <p className="mt-2 px-1 text-[11px] font-semibold text-mist">
               {isPower ? (
-                <>⚡ All {picks.length} must land for <span className="text-gold">{powerMultiplier(picks.length)}×</span> — one miss pays 0. (DNP picks are ignored.)</>
+                <>All {picks.length} must land for <span className="text-gold">{powerMultiplier(picks.length)}×</span> — one miss pays 0. (DNP picks are ignored.)</>
               ) : (
                 <>Tap ☆ to make a pick your <span className="text-gold">Captain</span> — it pays 2× if it lands.</>
               )}
@@ -110,7 +114,7 @@ export default function PickSlip({
         {/* locked/results mode banner */}
         {!editable && isPower && (
           <div className="mb-3 rounded-xl border border-gold/40 bg-gold/10 px-3 py-2 text-center text-xs font-bold text-gold">
-            ⚡ POWER PLAY · all picks must land
+            POWER PLAY · all picks must land
           </div>
         )}
 
@@ -215,17 +219,23 @@ export default function PickSlip({
           <span className="font-display text-3xl text-gold">{anySettled ? scored : potential} pts</span>
         </div>
 
+        {!anySettled && !locked && needsTwoTeams && (
+          <div className="mt-3 rounded-xl border border-flame/40 bg-flame/10 px-3 py-2 text-center text-xs font-bold text-flame">
+            Pick players from at least 2 different teams to save.
+          </div>
+        )}
+
         {anySettled ? null : locked ? (
-          <div className="mt-3 w-full rounded-2xl border border-gold/40 bg-gold/10 py-3.5 text-center font-display text-lg tracking-wide text-gold">
-            🔒 SLIP LOCKED
+          <div className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-gold/40 bg-gold/10 py-3.5 font-display text-lg tracking-wide text-gold">
+            <IconLock size={18} /> SLIP LOCKED
           </div>
         ) : (
           <button
-            disabled={picks.length === 0}
+            disabled={picks.length === 0 || needsTwoTeams}
             onClick={async () => { const ok = await onSave?.(); if (ok !== false) { setSaved(true); setTimeout(() => setSaved(false), 2000); } }}
             className="mt-3 w-full rounded-2xl bg-more py-3.5 font-display text-lg tracking-wide text-ink transition active:scale-[0.98] disabled:opacity-40"
           >
-            {saved ? 'SAVED ✓' : isPower ? 'SAVE POWER SLIP ⚡' : 'SAVE SLIP'}
+            {saved ? 'SAVED' : isPower ? 'SAVE POWER SLIP' : 'SAVE SLIP'}
           </button>
         )}
 
@@ -235,14 +245,14 @@ export default function PickSlip({
             disabled={busyShare}
             className="mt-3 w-full rounded-2xl border border-line bg-panel2 py-3 text-sm font-bold text-more transition active:scale-[0.98] disabled:opacity-60"
           >
-            {busyShare ? 'Making image…' : shared || '📤 Share my slip'}
+            {busyShare ? 'Making image…' : shared || 'Share my slip'}
           </button>
         )}
 
         {!anySettled && (
           <p className="mt-2 text-center text-[11px] text-mist">
             {locked
-              ? 'Your picks are in. Good luck! 🍀'
+              ? 'Your picks are in. Good luck!'
               : 'Saved to your account · auto-locks 30 min before kickoff'}
           </p>
         )}

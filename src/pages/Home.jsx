@@ -37,7 +37,7 @@ export default function Home({ matches = [], rows = [], count = 0, max = 5, onGo
   const sorted = [...rows].sort((a, b) => b.points - a.points);
   const rank = sorted.findIndex((r) => r.uid === user.uid) + 1;
   const top3 = sorted.slice(0, 3);
-  const medals = ['🥇', '🥈', '🥉'];
+  const rankBg = ['bg-gold', 'bg-mist', 'bg-flame']; // gold / silver / bronze
 
   return (
     <div className="space-y-4 pt-2">
@@ -54,7 +54,7 @@ export default function Home({ matches = [], rows = [], count = 0, max = 5, onGo
             Imperial · World Cup 2026
           </div>
           <p className="mt-3 text-sm font-semibold text-white/90">
-            Hey {user.name?.split(' ')[0] || 'there'} 👋 — the tournament’s on. Make your calls. 🏆
+            Hey {user.name?.split(' ')[0] || 'there'} — the tournament’s on. Make your calls.
           </p>
         </div>
       </div>
@@ -63,7 +63,7 @@ export default function Home({ matches = [], rows = [], count = 0, max = 5, onGo
       <div className="grid grid-cols-3 gap-3">
         <Stat label="Points" value={user.points || 0} accent="text-gold" ring="ring-gold/40" />
         <Stat label="Imperial" value={rank ? `#${rank}` : '—'} accent="text-azure" ring="ring-azure/40" />
-        <Stat label="Streak" value={`🔥 ${user.streak || 0}`} accent="text-flame" ring="ring-flame/40" />
+        <Stat label="Streak" value={user.streak || 0} accent="text-flame" ring="ring-flame/40" />
       </div>
 
       {/* primary CTA */}
@@ -71,7 +71,7 @@ export default function Home({ matches = [], rows = [], count = 0, max = 5, onGo
         onClick={onGoToday}
         className="w-full rounded-2xl bg-gradient-to-r from-more to-azure py-4 text-center font-display text-xl tracking-wide text-ink transition active:scale-[0.98]"
       >
-        {openMd ? `⚽ BUILD MATCHDAY ${openMd.n} SLIP` : '⚽ SEE MATCH DAYS'}
+        {openMd ? `BUILD MATCHDAY ${openMd.n} SLIP` : 'SEE MATCH DAYS'}
         <span className="ml-2 rounded-full bg-ink/25 px-2 py-0.5 align-middle text-xs font-extrabold">{count}/{max}</span>
       </button>
 
@@ -94,13 +94,16 @@ export default function Home({ matches = [], rows = [], count = 0, max = 5, onGo
       {top3.length > 0 && (
         <div className="rounded-2xl border border-line bg-panel p-4">
           <div className="mb-2 flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wide text-mist">🏆 Top of Imperial</span>
+            <span className="text-[11px] font-bold uppercase tracking-wide text-mist">Top of Imperial</span>
             {rank ? <span className="text-[11px] font-bold text-azure">You: #{rank}</span> : null}
           </div>
           <div className="space-y-1.5">
             {top3.map((u, i) => (
               <div key={u.uid} className="flex items-center justify-between text-sm">
-                <span className="font-semibold"><span className="mr-1.5">{medals[i]}</span>{u.name}</span>
+                <span className="flex items-center gap-2 font-semibold">
+                  <span className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-extrabold text-ink ${rankBg[i]}`}>{i + 1}</span>
+                  {u.name}
+                </span>
                 <span className="font-display text-base text-gold">{u.points}</span>
               </div>
             ))}
@@ -112,7 +115,7 @@ export default function Home({ matches = [], rows = [], count = 0, max = 5, onGo
         onClick={onInvite}
         className="w-full rounded-2xl border border-line bg-panel2 py-3 text-sm font-bold text-more transition active:scale-[0.98]"
       >
-        📣 Invite your mates
+        Invite your mates
       </button>
     </div>
   );
