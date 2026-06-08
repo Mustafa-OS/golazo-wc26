@@ -1,5 +1,14 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import PropCard from '../components/PropCard.jsx';
+import { isLogoUrl, teamShort } from '../lib/team.js';
+
+// Team flag: emoji (mock) or logo image (live API).
+function Flag({ team, size = 'h-4 w-4' }) {
+  if (isLogoUrl(team.flag)) {
+    return <img src={team.flag} alt="" className={`${size} shrink-0 rounded-sm object-contain`} />;
+  }
+  return <span>{team.flag}</span>;
+}
 
 function kickoffLabel(iso) {
   const d = new Date(iso);
@@ -29,9 +38,9 @@ export default function Today({ matches, pickFor, onPick, max, count, locked }) 
   const FILTERS = ['ALL', 'F', 'M', 'D', 'G'];
   const FILTER_LABEL = { ALL: 'All', F: 'FWD', M: 'MID', D: 'DEF', G: 'GK' };
   const TEAMS = [
-    { id: 'ALL', label: 'Both', flag: '' },
-    { id: match.home.code, label: match.home.code, flag: match.home.flag },
-    { id: match.away.code, label: match.away.code, flag: match.away.flag },
+    { id: 'ALL', label: 'Both', team: null },
+    { id: match.home.code, label: teamShort(match.home.name, match.home.code), team: match.home },
+    { id: match.away.code, label: teamShort(match.away.name, match.away.code), team: match.away },
   ];
 
   const matchStarted = match && Date.now() >= new Date(match.kickoff).getTime();
@@ -50,6 +59,7 @@ export default function Today({ matches, pickFor, onPick, max, count, locked }) 
           name: p.playerName,
           position: p.position,
           teamCode: p.teamCode,
+          teamShort: teamShort(p.team, p.teamCode),
           props: [],
         });
       }
@@ -84,11 +94,11 @@ export default function Today({ matches, pickFor, onPick, max, count, locked }) 
               {m.stage}
             </div>
             <div className="mt-1 flex items-center gap-1.5 text-base font-extrabold">
-              <span>{m.home.flag}</span>
-              <span>{m.home.code}</span>
+              <Flag team={m.home} />
+              <span>{teamShort(m.home.name, m.home.code)}</span>
               <span className="text-mist">v</span>
-              <span>{m.away.code}</span>
-              <span>{m.away.flag}</span>
+              <span>{teamShort(m.away.name, m.away.code)}</span>
+              <Flag team={m.away} />
             </div>
             {(() => {
               const k = relKickoff(m.kickoff);
@@ -129,7 +139,7 @@ export default function Today({ matches, pickFor, onPick, max, count, locked }) 
               teamFilter === t.id ? 'bg-more text-ink' : 'border border-line bg-panel text-mist'
             }`}
           >
-            {t.flag && <span className="text-sm">{t.flag}</span>}
+            {t.team && <Flag team={t.team} size="h-3.5 w-3.5" />}
             {t.label}
           </button>
         ))}

@@ -31,7 +31,7 @@ export default function PropCard({ player, props, pickFor, onPick, locked, atCap
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-panel2 text-[11px] font-extrabold text-mist">
-            {player.teamCode?.toString().slice(0, 3).toUpperCase()}
+            {player.teamShort || player.teamCode?.toString().slice(0, 3).toUpperCase()}
           </div>
           <div className="leading-tight">
             <div className="flex items-center gap-1.5 text-sm font-bold">
