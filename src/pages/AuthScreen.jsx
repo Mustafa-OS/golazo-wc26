@@ -84,14 +84,18 @@ export default function AuthScreen() {
             >
               <MicrosoftLogo /> Continue with Microsoft
             </button>
-            <p className="mt-1.5 px-1 text-center text-[11px] font-semibold text-mist">
-              Use your Imperial account — no password to remember.
+            <p className="mt-2 px-1 text-center text-[11px] font-semibold text-mist">
+              Sign in with your Imperial account — no password to remember.
             </p>
-            <div className="my-4 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-wide text-mist">
-              <span className="h-px flex-1 bg-line" /> or email <span className="h-px flex-1 bg-line" />
-            </div>
+            {error && (
+              <div className="mt-3 rounded-xl border border-less/40 bg-less/10 px-3.5 py-2.5 text-sm font-semibold text-less">
+                {error}
+              </div>
+            )}
           </>
         )}
+        {mode !== 'live' && (
+        <>
         <div className="mb-4 grid grid-cols-2 gap-1 rounded-xl bg-panel2 p-1">
           {[
             { id: 'signup', label: 'Create account' },
@@ -176,6 +180,8 @@ export default function AuthScreen() {
             {busy ? 'One sec…' : tab === 'signup' ? 'CREATE ACCOUNT' : 'SIGN IN'}
           </button>
         </form>
+        </>
+        )}
 
         {mode === 'mock' && (
           <>
@@ -196,7 +202,7 @@ export default function AuthScreen() {
       </div>
 
       <p className="mt-5 text-center text-[11px] text-mist">
-        No betting. No money. Just bragging rights. 🇬🇧
+        No betting. No money. Just bragging rights.
       </p>
     </div>
   );
