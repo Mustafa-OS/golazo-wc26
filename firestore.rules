@@ -12,10 +12,14 @@ service cloud.firestore {
       }
     }
 
-    // A user can read/write only their own profile; points are server-set.
+    // A user can read/write only their own profile; points/streak are server-set.
     match /users/{uid} {
       allow read: if request.auth != null;
-      allow create: if request.auth.uid == uid;
+      // On create, points/streak MUST start at 0 — stops a new account from
+      // self-assigning a score (which would game the all-time board).
+      allow create: if request.auth.uid == uid
+                    && request.resource.data.points == 0
+                    && request.resource.data.streak == 0;
       // block client tampering with points/streak — only functions touch those.
       allow update: if request.auth.uid == uid
                     && !request.resource.data.diff(resource.data).affectedKeys()
@@ -31,12 +35,16 @@ service cloud.firestore {
                   && (resource == null || request.auth.uid == resource.data.uid);
       // Create your own slip (locked or unlocked — picking then immediately
       // locking is a single create). The latch below governs later edits.
-      allow create: if request.auth.uid == request.resource.data.uid;
+      // settled/scored/streakApplied are server-only — blocking them here stops a
+      // client from writing a fake `scored` to game the weekly board.
+      allow create: if request.auth.uid == request.resource.data.uid
+                    && !request.resource.data.keys().hasAny(['settled', 'scored', 'streakApplied']);
       // Edit only while still unlocked; you may flip locked false->true, but a
       // locked slip can never be written again, and the owner can't change.
       allow update: if request.auth.uid == resource.data.uid
                     && resource.data.locked == false
-                    && request.resource.data.uid == resource.data.uid;
+                    && request.resource.data.uid == resource.data.uid
+                    && !request.resource.data.keys().hasAny(['settled', 'scored', 'streakApplied']);
     }
 
     // Leaderboards: read-only to clients.
