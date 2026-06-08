@@ -2,7 +2,8 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { pickValue } from './lib/scoringEngine.js';
 import { AuthProvider, useAuth } from './context/AuthContext.jsx';
 import { DataProvider, useData } from './context/DataContext.jsx';
-import { subscribeSlip, writeSlip, todayKey } from './lib/slipStore.js';
+import { subscribeSlip, writeSlip } from './lib/slipStore.js';
+import { buildMatchdays, usDateKey, matchdayKickoff, LOCK_LEAD_MS } from './lib/matchday.js';
 import { subscribeMyGroups, createGroup, joinGroup } from './lib/groupStore.js';
 import AuthScreen from './pages/AuthScreen.jsx';
 import Onboarding from './pages/Onboarding.jsx';
@@ -77,18 +78,29 @@ function MainApp() {
       localStorage.setItem('golazo.seenIntro', '1');
     }
   }, []);
-  const day = useMemo(() => todayKey(), []);
   const loadedRef = useRef(false);
   const draftTimer = useRef(null);
 
   // The groups this user belongs to (for the Groups tab + group boards).
   useEffect(() => subscribeMyGroups(user.uid, setGroups), [user.uid]);
 
-  // Restore the persisted slip. Load picks once (don't clobber live edits),
-  // but keep tracking `locked` so a server-side lock is always reflected.
+  // Slips are per MATCH DAY. Default the active slip to the nearest open day,
+  // and switch it when the user opens another open match day in the Today tab.
+  const openMatchdays = useMemo(
+    () => buildMatchdays(matches).filter((d) => d.status === 'open'),
+    [matches]
+  );
+  const [activeMdKey, setActiveMdKey] = useState(null);
   useEffect(() => {
+    if (!activeMdKey && openMatchdays[0]) setActiveMdKey(openMatchdays[0].key);
+  }, [openMatchdays, activeMdKey]);
+
+  // Restore that match day's saved slip (picks reset when the day changes).
+  useEffect(() => {
+    if (!activeMdKey) return;
     loadedRef.current = false;
-    return subscribeSlip(user.uid, day, (slip) => {
+    setLocked(false); setPicks([]); setMode('normal'); setCaptainId(null);
+    return subscribeSlip(user.uid, activeMdKey, (slip) => {
       if (!slip) { loadedRef.current = true; return; }
       if (!loadedRef.current) {
         setPicks(slip.picks || []);
@@ -98,16 +110,24 @@ function MainApp() {
       }
       setLocked((prev) => prev || !!slip.locked);
     });
-  }, [user.uid, day]);
+  }, [user.uid, activeMdKey]);
 
-  // Auto-lock once the earliest picked match has kicked off.
-  const earliestKickoff = useMemo(() => {
-    const koByMatch = Object.fromEntries(matches.map((m) => [m.id, new Date(m.kickoff).getTime()]));
-    const times = picks.map((p) => koByMatch[p.matchId]).filter((t) => Number.isFinite(t));
-    return times.length ? Math.min(...times) : null;
-  }, [picks, matches]);
-  const kickedOff = earliestKickoff != null && Date.now() >= earliestKickoff;
-  const effectiveLocked = locked || kickedOff;
+  // Slip auto-locks 30 min before the match day's earliest kickoff.
+  const lockAt = useMemo(() => {
+    if (!activeMdKey) return null;
+    const games = matches.filter((m) => usDateKey(m.kickoff) === activeMdKey);
+    return games.length ? matchdayKickoff(games) - LOCK_LEAD_MS : null;
+  }, [matches, activeMdKey]);
+  const [, tick] = useState(0);
+  useEffect(() => {
+    if (lockAt == null) return;
+    const ms = lockAt - Date.now();
+    if (ms <= 0) return;
+    const t = setTimeout(() => tick((n) => n + 1), Math.min(ms + 500, 2 ** 31 - 1));
+    return () => clearTimeout(t);
+  }, [lockAt]);
+  const timeLocked = lockAt != null && Date.now() >= lockAt;
+  const effectiveLocked = locked || timeLocked;
 
   // Keep the captain valid: clear it in power mode or if its pick was removed.
   useEffect(() => {
@@ -117,21 +137,21 @@ function MainApp() {
 
   // Persist a draft (debounced) whenever the slip changes while still editable.
   useEffect(() => {
-    if (!loadedRef.current || effectiveLocked || picks.length === 0) return;
+    if (!loadedRef.current || effectiveLocked || !activeMdKey || picks.length === 0) return;
     clearTimeout(draftTimer.current);
     draftTimer.current = setTimeout(() => {
-      writeSlip(user.uid, day, { picks, locked: false, mode, captainId }).catch((e) => console.error('draft save', e));
+      writeSlip(user.uid, activeMdKey, { picks, locked: false, mode, captainId }).catch((e) => console.error('draft save', e));
     }, 700);
     return () => clearTimeout(draftTimer.current);
-  }, [picks, effectiveLocked, user.uid, day, mode, captainId]);
+  }, [picks, effectiveLocked, user.uid, activeMdKey, mode, captainId]);
 
-  // If a match kicks off while the slip is open, latch it locked in storage.
+  // Latch the slip locked in storage once the 30-min deadline passes.
   useEffect(() => {
-    if (kickedOff && !locked && picks.length > 0) {
+    if (timeLocked && !locked && activeMdKey && picks.length > 0) {
       setLocked(true);
-      writeSlip(user.uid, day, { picks, locked: true, mode, captainId }).catch((e) => console.error('auto-lock', e));
+      writeSlip(user.uid, activeMdKey, { picks, locked: true, mode, captainId }).catch((e) => console.error('auto-lock', e));
     }
-  }, [kickedOff]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [timeLocked]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Leaderboard rows with the real signed-in user merged in (drops any stale
   // copy of "me" so the row always reflects the live profile points/streak).
@@ -177,15 +197,15 @@ function MainApp() {
     setCaptainId((prev) => (prev === propId ? null : propId));
   }
 
-  async function lockSlip() {
-    if (picks.length === 0 || effectiveLocked) return;
-    clearTimeout(draftTimer.current); // don't let a pending draft race the lock
-    setLocked(true);
+  async function saveSlip() {
+    if (picks.length === 0 || effectiveLocked || !activeMdKey) return false;
+    clearTimeout(draftTimer.current);
     try {
-      await writeSlip(user.uid, day, { picks, locked: true, mode, captainId });
+      await writeSlip(user.uid, activeMdKey, { picks, locked: false, mode, captainId });
+      return true;
     } catch (e) {
-      console.error('lock slip', e);
-      setLocked(false); // let them retry if the write failed
+      console.error('save slip', e);
+      return false;
     }
   }
 
@@ -207,6 +227,8 @@ function MainApp() {
               max={MAX_PICKS}
               count={picks.length}
               locked={effectiveLocked}
+              uid={user.uid}
+              onOpenMatchday={setActiveMdKey}
             />
           ))}
         {tab === 'board' && <LeaderboardPage rows={rows} weekly={weekly} meUid={user.uid} groups={groups} />}
@@ -230,7 +252,7 @@ function MainApp() {
           onSetMode={changeMode}
           onSetCaptain={toggleCaptain}
           onRemove={removePick}
-          onLock={lockSlip}
+          onSave={saveSlip}
           onClose={() => setSlipOpen(false)}
         />
       )}

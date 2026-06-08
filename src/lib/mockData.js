@@ -16,10 +16,19 @@ const sq = (team, code, players) =>
     teamCode: code,
   }));
 
+// Kickoffs relative to "now" so the demo always spans previous / open / upcoming
+// match days (the Today tabs classify by date).
+const iso = (offsetDays, hour = 19) => {
+  const d = new Date();
+  d.setUTCDate(d.getUTCDate() + offsetDays);
+  d.setUTCHours(hour, 0, 0, 0);
+  return d.toISOString();
+};
+
 export const MOCK_MATCHES = [
   {
     id: 'm-eng-cro',
-    kickoff: '2026-06-14T20:00:00Z',
+    kickoff: iso(1), // open
     stage: 'Group L',
     home: {
       name: 'England', code: 'ENG', flag: '🏴',
@@ -40,7 +49,7 @@ export const MOCK_MATCHES = [
   },
   {
     id: 'm-arg-alg',
-    kickoff: '2026-06-16T23:00:00Z',
+    kickoff: iso(2), // open
     stage: 'Group J',
     home: {
       name: 'Argentina', code: 'ARG', flag: '🇦🇷',
@@ -61,7 +70,9 @@ export const MOCK_MATCHES = [
   },
   {
     id: 'm-bra-ger',
-    kickoff: '2026-06-17T19:00:00Z',
+    kickoff: iso(-2), // previous (finished)
+    status: 'FT',
+    score: { home: 2, away: 1 },
     stage: 'Group C',
     home: {
       name: 'Brazil', code: 'BRA', flag: '🇧🇷',
@@ -82,7 +93,7 @@ export const MOCK_MATCHES = [
   },
   {
     id: 'm-fra-esp',
-    kickoff: '2026-06-18T19:00:00Z',
+    kickoff: iso(5), // upcoming (locked)
     stage: 'Group D',
     home: {
       name: 'France', code: 'FRA', flag: '🇫🇷',

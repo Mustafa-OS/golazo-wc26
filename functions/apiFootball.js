@@ -54,6 +54,7 @@ export async function getFixtures(apiKey, date, season = SEASON) {
     stage: r.league.round,
     home: { name: r.teams.home.name, code: r.teams.home.id, flag: r.teams.home.logo },
     away: { name: r.teams.away.name, code: r.teams.away.id, flag: r.teams.away.logo },
+    score: { home: r.goals?.home ?? null, away: r.goals?.away ?? null }, // for past-match results
   }));
 }
 

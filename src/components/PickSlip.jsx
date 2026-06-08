@@ -14,9 +14,10 @@ function computeScored(picks, mode) {
 
 export default function PickSlip({
   picks, max, locked, mode = 'normal', captainId = null,
-  onSetMode, onSetCaptain, onRemove, onLock, onClose,
+  onSetMode, onSetCaptain, onRemove, onSave, onClose,
 }) {
   const [shared, setShared] = useState('');
+  const [saved, setSaved] = useState(false);
   const anySettled = picks.some((p) => p.correct !== undefined);
   const editable = !locked && !anySettled;
   const potential = slipPotential(picks, { mode, captainId });
@@ -221,10 +222,10 @@ export default function PickSlip({
         ) : (
           <button
             disabled={picks.length === 0}
-            onClick={() => { onLock(); onClose(); }}
+            onClick={async () => { const ok = await onSave?.(); if (ok !== false) { setSaved(true); setTimeout(() => setSaved(false), 2000); } }}
             className="mt-3 w-full rounded-2xl bg-more py-3.5 font-display text-lg tracking-wide text-ink transition active:scale-[0.98] disabled:opacity-40"
           >
-            {isPower ? 'LOCK POWER SLIP ⚡' : 'LOCK SLIP'}
+            {saved ? 'SAVED ✓' : isPower ? 'SAVE POWER SLIP ⚡' : 'SAVE SLIP'}
           </button>
         )}
 
@@ -242,7 +243,7 @@ export default function PickSlip({
           <p className="mt-2 text-center text-[11px] text-mist">
             {locked
               ? 'Your picks are in. Good luck! 🍀'
-              : 'Locking is final · picks also lock automatically at the first kickoff'}
+              : 'Saved to your account · auto-locks 30 min before kickoff'}
           </p>
         )}
       </div>

@@ -41,16 +41,34 @@ const todayISO = () => new Date().toISOString().slice(0, 10);
 // endpoint can run it.
 // ---------------------------------------------------------------------------
 
-async function generateProps(key, date, season) {
-  const fixtures = await api.getFixtures(key, date, season);
-  const batch = db.batch();
-  let propCount = 0;
+// Matches kicking off within this many days get props generated (the "open"
+// window the UI lets people play). The frontend marks match days open when
+// they're within the next 4 days; we generate a touch beyond so they're ready.
+const OPEN_WINDOW_MS = 5 * 86400e3;
 
+async function generateProps(key, _date, season) {
+  // Load the WHOLE schedule so every match day shows up (locked until open).
+  const fixtures = await api.getFixtures(key, undefined, season);
+
+  // 1) Write all fixtures as lightweight schedule docs (status + score).
+  const sched = db.batch();
   for (const fx of fixtures) {
-    // Build from full squads (available all day) rather than lineups (which only
-    // land ~1h before kickoff). Players who don't play are voided at resolution
-    // by the MIN_MINUTES rule in the scoring engine. Squad names are abbreviated
-    // ("R. Jiménez"), which is the style we want.
+    sched.set(
+      db.doc(`matches/${fx.id}`),
+      { id: fx.id, kickoff: fx.kickoff, stage: fx.stage, status: fx.status, home: fx.home, away: fx.away, score: fx.score },
+      { merge: true }
+    );
+  }
+  await sched.commit();
+
+  // 2) Generate player props only for upcoming matches inside the open window.
+  const now = Date.now();
+  const open = fixtures.filter((f) => {
+    const t = new Date(f.kickoff).getTime();
+    return f.status === 'NS' && t <= now + OPEN_WINDOW_MS;
+  });
+  let propCount = 0;
+  for (const fx of open) {
     const [homeSquad, awaySquad] = await Promise.all([
       api.getSquad(key, fx.home.code),
       api.getSquad(key, fx.away.code),
@@ -61,18 +79,20 @@ async function generateProps(key, date, season) {
       id: fx.id,
       kickoff: fx.kickoff,
       stage: fx.stage,
+      status: fx.status,
       home: { ...fx.home, players: withTeam(homeSquad, fx.home) },
       away: { ...fx.away, players: withTeam(awaySquad, fx.away) },
     };
+    const batch = db.batch(); // one batch per match keeps writes well under limits
     batch.set(db.doc(`matches/${fx.id}`), match, { merge: true });
     for (const prop of buildMatchProps(match)) {
       batch.set(db.doc(`matches/${fx.id}/props/${prop.id.replace(/:/g, '_')}`), prop);
       propCount++;
     }
+    await batch.commit();
   }
-  await batch.commit();
-  console.log(`Generated ${propCount} props for ${fixtures.length} fixtures (${date})`);
-  return { fixtures: fixtures.length, props: propCount };
+  console.log(`Schedule: ${fixtures.length} fixtures; props for ${open.length} open matches (${propCount})`);
+  return { fixtures: fixtures.length, open: open.length, props: propCount };
 }
 
 // Monday (UTC) of the current week, as YYYY-MM-DD — the weekly board cutoff.
@@ -134,9 +154,9 @@ async function resolveMatches(key, date, season) {
     console.log(`Settled slip ${slipDoc.id}: ${total} pts (${slip.mode || 'normal'})`);
   }
 
-  // Mark finished matches for the UI.
+  // Mark finished matches for the UI (with the final score for the results view).
   const mb = db.batch();
-  for (const fx of finished) mb.set(db.doc(`matches/${fx.id}`), { settled: true, status: 'FT' }, { merge: true });
+  for (const fx of finished) mb.set(db.doc(`matches/${fx.id}`), { settled: true, status: 'FT', score: fx.score }, { merge: true });
   await mb.commit();
 
   return { finished: finished.length, settled: settledCount };
