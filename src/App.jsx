@@ -11,6 +11,7 @@ import LeaderboardPage from './pages/LeaderboardPage.jsx';
 import GroupsPage from './pages/GroupsPage.jsx';
 import Profile from './pages/Profile.jsx';
 import PickSlip from './components/PickSlip.jsx';
+import HowToPlay from './components/HowToPlay.jsx';
 
 const MAX_PICKS = 5;
 
@@ -67,6 +68,15 @@ function MainApp() {
   const [mode, setMode] = useState('normal'); // 'normal' | 'power'
   const [captainId, setCaptainId] = useState(null);
   const [groups, setGroups] = useState([]);
+  const [showHelp, setShowHelp] = useState(false);
+
+  // Show the how-to-play once on first run; reopenable via the header ⓘ.
+  useEffect(() => {
+    if (!localStorage.getItem('golazo.seenIntro')) {
+      setShowHelp(true);
+      localStorage.setItem('golazo.seenIntro', '1');
+    }
+  }, []);
   const day = useMemo(() => todayKey(), []);
   const loadedRef = useRef(false);
   const draftTimer = useRef(null);
@@ -181,7 +191,7 @@ function MainApp() {
 
   return (
     <div className="mx-auto flex min-h-full max-w-md flex-col">
-      <Header picks={picks} max={MAX_PICKS} onOpenSlip={() => setSlipOpen(true)} />
+      <Header picks={picks} max={MAX_PICKS} onOpenSlip={() => setSlipOpen(true)} onHelp={() => setShowHelp(true)} />
 
       <main className="flex-1 px-4 pb-28 pt-2">
         {tab === 'today' &&
@@ -225,12 +235,14 @@ function MainApp() {
         />
       )}
 
+      {showHelp && <HowToPlay onClose={() => setShowHelp(false)} />}
+
       <BottomNav tab={tab} setTab={setTab} />
     </div>
   );
 }
 
-function Header({ picks, max, onOpenSlip }) {
+function Header({ picks, max, onOpenSlip, onHelp }) {
   return (
     <header className="sticky top-0 z-20 flex items-center justify-between border-b border-line bg-ink/85 px-4 py-3 backdrop-blur">
       <div className="leading-none">
@@ -241,15 +253,24 @@ function Header({ picks, max, onOpenSlip }) {
           Imperial · WC26
         </div>
       </div>
-      <button
-        onClick={onOpenSlip}
-        className="flex items-center gap-2 rounded-full border border-line bg-panel2 px-4 py-2 text-sm font-bold transition active:scale-95"
-      >
-        <span>My Slip</span>
-        <span className="rounded-full bg-more px-2 py-0.5 text-xs font-extrabold text-ink">
-          {picks.length}/{max}
-        </span>
-      </button>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={onHelp}
+          aria-label="How to play"
+          className="flex h-9 w-9 items-center justify-center rounded-full border border-line bg-panel2 text-base font-bold text-mist transition active:scale-95 hover:text-white"
+        >
+          ⓘ
+        </button>
+        <button
+          onClick={onOpenSlip}
+          className="flex items-center gap-2 rounded-full border border-line bg-panel2 px-4 py-2 text-sm font-bold transition active:scale-95"
+        >
+          <span>My Slip</span>
+          <span className="rounded-full bg-more px-2 py-0.5 text-xs font-extrabold text-ink">
+            {picks.length}/{max}
+          </span>
+        </button>
+      </div>
     </header>
   );
 }

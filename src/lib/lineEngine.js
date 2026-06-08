@@ -32,7 +32,7 @@ export const METRICS = {
 // made one side a pointless near-lock).
 const POSITION_METRICS = {
   G: ['saves', 'conceded'],
-  D: ['tackles', 'cards', 'shots', 'passes', 'goals'],
+  D: ['tackles', 'shots', 'passes', 'goals'],
   M: ['shots', 'shotsOn', 'assists', 'tackles', 'passes', 'goals'],
   F: ['goals', 'shotsOn', 'shots', 'assists'],
 };
@@ -43,7 +43,7 @@ const POSITION_METRICS = {
 // Sanity: line = round(baseline) area; MORE ≈ P(X ≥ ceil(line)) lands ~25–55%.
 const POSITION_BASELINE = {
   G: { saves: 2.8, conceded: 1.15 },
-  D: { tackles: 2.1, cards: 0.30, shots: 0.5, passes: 50, goals: 0.07 },
+  D: { tackles: 2.1, shots: 0.5, passes: 50, goals: 0.07 },
   M: { shots: 1.2, shotsOn: 0.5, assists: 0.18, tackles: 1.7, passes: 55, goals: 0.12 },
   F: { goals: 0.45, shotsOn: 1.2, shots: 2.6, assists: 0.18 },
 };

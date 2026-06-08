@@ -28,17 +28,16 @@ function relKickoff(iso) {
 
 export default function Today({ matches, pickFor, onPick, max, count, locked }) {
   const [activeId, setActiveId] = useState(matches[0]?.id);
-  const [posFilter, setPosFilter] = useState('ALL');
-  const [teamFilter, setTeamFilter] = useState('ALL');
+  const [posFilter, setPosFilter] = useState(''); // '' = all positions
+  const [teamFilter, setTeamFilter] = useState(''); // '' = both teams
   const match = matches.find((m) => m.id === activeId) || matches[0];
 
   // Team codes are match-specific, so reset the team filter when the match changes.
-  useEffect(() => setTeamFilter('ALL'), [activeId]);
+  useEffect(() => setTeamFilter(''), [activeId]);
 
-  const FILTERS = ['ALL', 'F', 'M', 'D', 'G'];
-  const FILTER_LABEL = { ALL: 'All', F: 'FWD', M: 'MID', D: 'DEF', G: 'GK' };
+  const FILTERS = ['F', 'M', 'D', 'G'];
+  const FILTER_LABEL = { F: 'FWD', M: 'MID', D: 'DEF', G: 'GK' };
   const TEAMS = [
-    { id: 'ALL', label: 'Both', team: null },
     { id: match.home.code, label: teamShort(match.home.name, match.home.code), team: match.home },
     { id: match.away.code, label: teamShort(match.away.name, match.away.code), team: match.away },
   ];
@@ -60,6 +59,7 @@ export default function Today({ matches, pickFor, onPick, max, count, locked }) 
           position: p.position,
           teamCode: p.teamCode,
           teamShort: teamShort(p.team, p.teamCode),
+          flag: String(p.teamCode) === String(match.home.code) ? match.home.flag : match.away.flag,
           props: [],
         });
       }
@@ -74,8 +74,8 @@ export default function Today({ matches, pickFor, onPick, max, count, locked }) 
 
   const shown = players.filter(
     (pl) =>
-      (posFilter === 'ALL' || pl.position === posFilter) &&
-      (teamFilter === 'ALL' || pl.teamCode === teamFilter)
+      (!posFilter || pl.position === posFilter) &&
+      (!teamFilter || pl.teamCode === teamFilter)
   );
 
   return (
@@ -134,7 +134,7 @@ export default function Today({ matches, pickFor, onPick, max, count, locked }) 
           <button
             key={t.id}
             aria-label={`team-${t.id}`}
-            onClick={() => setTeamFilter(t.id)}
+            onClick={() => setTeamFilter((v) => (v === t.id ? '' : t.id))}
             className={`flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold uppercase tracking-wide transition ${
               teamFilter === t.id ? 'bg-more text-ink' : 'border border-line bg-panel text-mist'
             }`}
@@ -150,7 +150,7 @@ export default function Today({ matches, pickFor, onPick, max, count, locked }) 
         {FILTERS.map((f) => (
           <button
             key={f}
-            onClick={() => setPosFilter(f)}
+            onClick={() => setPosFilter((v) => (v === f ? '' : f))}
             className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-bold uppercase tracking-wide transition ${
               posFilter === f ? 'bg-more text-ink' : 'border border-line bg-panel text-mist'
             }`}

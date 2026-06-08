@@ -50,18 +50,22 @@ async function generateProps(key, date, season) {
     // Build from full squads (available all day) rather than lineups (which only
     // land ~1h before kickoff). Players who don't play are voided at resolution
     // by the MIN_MINUTES rule in the scoring engine.
-    const [homeSquad, awaySquad] = await Promise.all([
+    // Squads give reliable positions but abbreviated names ("G. Ochoa"); the
+    // /players feed gives full names. Fetch both and merge by player id.
+    const [homeSquad, awaySquad, homeNames, awayNames] = await Promise.all([
       api.getSquad(key, fx.home.code),
       api.getSquad(key, fx.away.code),
+      api.getPlayerNames(key, fx.home.code).catch(() => ({})),
+      api.getPlayerNames(key, fx.away.code).catch(() => ({})),
     ]);
-    const withTeam = (players, team) =>
-      players.map((p) => ({ ...p, team: team.name, teamCode: team.code }));
+    const withTeam = (players, team, names) =>
+      players.map((p) => ({ ...p, name: names[p.id] || p.name, team: team.name, teamCode: team.code }));
     const match = {
       id: fx.id,
       kickoff: fx.kickoff,
       stage: fx.stage,
-      home: { ...fx.home, players: withTeam(homeSquad, fx.home) },
-      away: { ...fx.away, players: withTeam(awaySquad, fx.away) },
+      home: { ...fx.home, players: withTeam(homeSquad, fx.home, homeNames) },
+      away: { ...fx.away, players: withTeam(awaySquad, fx.away, awayNames) },
     };
     batch.set(db.doc(`matches/${fx.id}`), match, { merge: true });
     for (const prop of buildMatchProps(match)) {
