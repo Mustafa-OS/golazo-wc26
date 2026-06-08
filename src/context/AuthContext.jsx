@@ -217,7 +217,7 @@ export function AuthProvider({ children }) {
   // Send a password-reset email (so a forgotten password never loses an account).
   const resetPassword = useCallback(async (email) => {
     setError('');
-    if (!email?.trim()) { setError('Enter your email above first, then tap reset.'); return false; }
+    if (!email?.trim()) { setError('Enter your email above first, then tap Forgot password again to get a reset link.'); return false; }
     if (!isAllowedEmail(email)) {
       setError(`Use your Imperial email (${(ALLOWED_EMAIL_DOMAINS || []).join(' or ')}).`);
       return false;

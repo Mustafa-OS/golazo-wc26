@@ -29,7 +29,7 @@ export default function AuthScreen() {
   async function forgot() {
     setNotice('');
     const ok = await resetPassword(email);
-    if (ok) setNotice(`If an account exists for ${email.trim()}, a reset link is on its way — check your inbox (and spam).`);
+    if (ok) setNotice(`If an account exists for ${email.trim()}, a reset link is on its way (may take around 2–3 minutes) — check your junk folder.`);
   }
 
   function switchTab(t) {
