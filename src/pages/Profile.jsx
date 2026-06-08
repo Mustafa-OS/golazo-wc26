@@ -7,10 +7,10 @@ export default function Profile({ rows }) {
 
   async function shareApp() {
     const url = window.location.origin + window.location.pathname;
-    const text = "I'm playing OVER. — Imperial's World Cup 2026 props game. No betting, just bragging rights. Get on:";
+    const text = "I'm playing GOLAZO. — Imperial's World Cup 2026 props game. No betting, just bragging rights. Get on:";
     try {
       if (navigator.share) {
-        await navigator.share({ title: 'OVER.', text, url });
+        await navigator.share({ title: 'GOLAZO.', text, url });
       } else {
         await navigator.clipboard.writeText(`${text} ${url}`);
         setCopied(true);

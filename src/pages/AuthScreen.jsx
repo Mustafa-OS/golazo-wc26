@@ -44,7 +44,7 @@ export default function AuthScreen() {
       {/* brand */}
       <div className="text-center">
         <div className="font-display text-6xl tracking-wide">
-          OVER<span className="text-more">.</span>
+          GOLAZO<span className="text-more">.</span>
         </div>
         <div className="mt-1 text-[11px] font-semibold uppercase tracking-[0.3em] text-mist">
           Imperial · World Cup 2026

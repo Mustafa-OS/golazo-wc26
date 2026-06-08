@@ -27,10 +27,10 @@ export default function PickSlip({
     const lines = picks.map(
       (p) => `${p.side === 'MORE' ? '▲' : '▼'} ${p.playerName} ${p.side} ${p.label} ${p.line}${captainId === p.id ? ' (★C)' : ''}`
     );
-    const tag = isPower ? '⚡ POWER PLAY' : 'My OVER. slip';
+    const tag = isPower ? '⚡ POWER PLAY' : 'My GOLAZO. slip';
     const text = `${tag} 🔥\n${lines.join('\n')}\nMax ${potential} pts · play: ${url}`;
     try {
-      if (navigator.share) await navigator.share({ title: 'My OVER. slip', text });
+      if (navigator.share) await navigator.share({ title: 'My GOLAZO. slip', text });
       else {
         await navigator.clipboard.writeText(text);
         setShared(true);

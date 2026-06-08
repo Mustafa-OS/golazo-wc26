@@ -1,15 +1,15 @@
-# OVER. — Imperial World Cup 2026 Props
+# Golazo — Imperial World Cup 2026 Props
 
 A PrizePicks-style player-props game for the 2026 World Cup, built to spread across
 Imperial College. Browse a match, tap **MORE** or **LESS** on app-set lines, lock
-your best **5 picks** a day, climb the all-Imperial leaderboard or a private group.
-**No betting** — just points and bragging rights.
+your best **5 picks** a day (or go all-in with a **Power Play** parlay / a **2× Captain**),
+climb the all-Imperial leaderboard or a private group. **No betting** — just points
+and bragging rights.
 
-> Kickoff is **11 June 2026**. The UI, engines, auth, live Firestore wiring, slips,
-> leaderboards and groups are all built and tested. What's left is *yours*: create a
-> Firebase project and an API-Football account, then flip the switches in §4.
+> Kickoff is **11 June 2026**. The app is **deployed live** on Firebase; the only
+> thing left is upgrading API-Football to Pro so season-2026 data unlocks (see §4).
 
-**▶ Live demo (mock data):** https://mustafa-os.github.io/over-wc26/
+**▶ Live app:** https://golazo-wc.web.app  ·  **Mock demo:** https://mustafa-os.github.io/golazo-wc26/
 
 ---
 

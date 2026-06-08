@@ -47,7 +47,7 @@ function Splash() {
     <div className="flex min-h-full items-center justify-center">
       <div className="animate-pulse text-center">
         <div className="font-display text-5xl tracking-wide">
-          OVER<span className="text-more">.</span>
+          GOLAZO<span className="text-more">.</span>
         </div>
         <div className="mt-2 text-[11px] font-semibold uppercase tracking-[0.3em] text-mist">
           Loading
@@ -235,7 +235,7 @@ function Header({ picks, max, onOpenSlip }) {
     <header className="sticky top-0 z-20 flex items-center justify-between border-b border-line bg-ink/85 px-4 py-3 backdrop-blur">
       <div className="leading-none">
         <div className="font-display text-2xl tracking-wide">
-          OVER<span className="text-more">.</span>
+          GOLAZO<span className="text-more">.</span>
         </div>
         <div className="-mt-0.5 text-[10px] font-semibold uppercase tracking-[0.25em] text-mist">
           Imperial · WC26
