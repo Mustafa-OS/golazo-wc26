@@ -4,6 +4,7 @@ import Flag from '../components/Flag.jsx';
 import { teamShort } from '../lib/team.js';
 import { buildMatchdays } from '../lib/matchday.js';
 import { subscribeSlip } from '../lib/slipStore.js';
+import { IconLock } from '../components/Icons.jsx';
 
 const ukTime = (iso) => new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 function relKickoff(iso) {
@@ -88,22 +89,25 @@ function teamsOfDay(games) {
 function MatchdayCard({ d, onPick }) {
   const locked = d.status === 'upcoming';
   const prev = d.status === 'previous';
+  const cardCls = locked
+    ? 'border-line bg-panel/50 opacity-60'
+    : prev
+      ? 'border-line bg-gradient-to-br from-gold/10 via-panel to-flame/10 hover:border-gold/50 active:scale-[0.99]'
+      : 'border-line bg-gradient-to-br from-more/10 via-panel to-azure/10 hover:border-more/60 active:scale-[0.99]';
   return (
     <button
       onClick={() => !locked && onPick(d.key)}
       disabled={locked}
-      className={`group relative w-full overflow-hidden rounded-2xl border p-4 text-left transition ${
-        locked ? 'border-line bg-panel/60 opacity-70' : 'border-line bg-panel active:scale-[0.99] hover:border-more/50'
-      }`}
+      className={`group relative w-full overflow-hidden rounded-2xl border p-4 text-left transition ${cardCls}`}
     >
-      {!locked && <div className={`pointer-events-none absolute inset-y-0 right-0 w-1.5 ${prev ? 'bg-gold/40' : 'bg-more/50'}`} />}
+      {!locked && <div className={`pointer-events-none absolute inset-y-0 right-0 w-1.5 ${prev ? 'bg-gold/50' : 'bg-more/60'}`} />}
       <div className="flex items-center justify-between">
         <div>
           <div className="font-display text-2xl leading-none">MATCHDAY {d.n}</div>
           <div className="mt-1 text-xs font-semibold text-mist">{d.label}</div>
         </div>
-        <span className={`rounded-full px-3 py-1 text-xs font-bold ${locked ? 'bg-panel2 text-mist' : prev ? 'bg-gold/15 text-gold' : 'bg-more/15 text-more'}`}>
-          {locked ? 'Locked' : prev ? 'Results ›' : `${d.games.length} ${d.games.length === 1 ? 'game' : 'games'} ›`}
+        <span className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold ${locked ? 'bg-panel2 text-mist' : prev ? 'bg-gold/15 text-gold' : 'bg-more/15 text-more'}`}>
+          {locked ? <><IconLock size={12} /> Locked</> : prev ? 'Results ›' : `${d.games.length} ${d.games.length === 1 ? 'game' : 'games'} ›`}
         </span>
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-1.5">

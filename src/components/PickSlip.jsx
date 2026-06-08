@@ -219,12 +219,6 @@ export default function PickSlip({
           <span className="font-display text-3xl text-gold">{anySettled ? scored : potential} pts</span>
         </div>
 
-        {editable && picks.length > 0 && (
-          <button onClick={onClear} className="mt-2 w-full text-center text-[11px] font-bold text-mist transition hover:text-less">
-            Clear slip
-          </button>
-        )}
-
         {!anySettled && !locked && needsTwoTeams && (
           <div className="mt-3 rounded-xl border border-flame/40 bg-flame/10 px-3 py-2 text-center text-xs font-bold text-flame">
             Pick players from at least 2 different countries to save.
@@ -236,13 +230,23 @@ export default function PickSlip({
             <IconLock size={18} /> SLIP LOCKED
           </div>
         ) : (
-          <button
-            disabled={picks.length === 0 || needsTwoTeams}
-            onClick={async () => { const ok = await onSave?.(); if (ok !== false) { setSaved(true); setTimeout(() => setSaved(false), 2000); } }}
-            className="mt-3 w-full rounded-2xl bg-more py-3.5 font-display text-lg tracking-wide text-ink transition active:scale-[0.98] disabled:opacity-40"
-          >
-            {saved ? 'SAVED' : isPower ? 'SAVE POWER SLIP' : 'SAVE SLIP'}
-          </button>
+          <div className="mt-3 flex gap-2">
+            <button
+              disabled={picks.length === 0 || needsTwoTeams}
+              onClick={async () => { const ok = await onSave?.(); if (ok !== false) { setSaved(true); setTimeout(() => setSaved(false), 2000); } }}
+              className="flex-1 rounded-2xl bg-more py-3.5 font-display text-lg tracking-wide text-ink transition active:scale-[0.98] disabled:opacity-40"
+            >
+              {saved ? 'SAVED' : isPower ? 'SAVE POWER SLIP' : 'SAVE SLIP'}
+            </button>
+            {picks.length > 0 && (
+              <button
+                onClick={onClear}
+                className="shrink-0 rounded-2xl border border-less/50 bg-less/10 px-4 font-display text-sm tracking-wide text-less transition active:scale-[0.97] hover:bg-less/20"
+              >
+                CLEAR
+              </button>
+            )}
+          </div>
         )}
 
         {picks.length > 0 && (

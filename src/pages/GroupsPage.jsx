@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 
+// Rotating festive accent stripe for group cards.
+const GROUP_ACCENTS = ['bg-more', 'bg-azure', 'bg-grape', 'bg-flame', 'bg-gold'];
+
 export default function GroupsPage({ groups, onCreate, onJoin }) {
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
@@ -96,8 +99,9 @@ export default function GroupsPage({ groups, onCreate, onJoin }) {
             You’re not in any groups yet. Join one with a code, or create your own.
           </p>
         ) : (
-          groups.map((g) => (
-            <div key={g.id} className="flex items-center justify-between rounded-xl border border-line bg-panel px-3 py-3">
+          groups.map((g, i) => (
+            <div key={g.id} className="relative flex items-center justify-between overflow-hidden rounded-xl border border-line bg-panel py-3 pl-5 pr-3">
+              <div className={`absolute inset-y-0 left-0 w-1.5 ${GROUP_ACCENTS[i % GROUP_ACCENTS.length]}`} />
               <div>
                 <div className="text-sm font-bold">{g.name}</div>
                 <div className="text-[11px] font-semibold text-mist">
