@@ -12,7 +12,7 @@ const DEPARTMENTS = [
 
 export default function Onboarding() {
   const { user, completeOnboarding, error, busy, signOut } = useAuth();
-  const [name, setName] = useState('');
+  const [name, setName] = useState(user?.displayName || ''); // pre-filled from Microsoft
   const [dept, setDept] = useState('');
 
   async function submit(e) {

@@ -29,6 +29,11 @@ function friendly(code) {
     'auth/user-not-found': 'No account found for that email.',
     'auth/wrong-password': 'Email or password is incorrect.',
     'auth/too-many-requests': 'Too many attempts — wait a moment and retry.',
+    'auth/operation-not-allowed': 'Microsoft sign-in isn’t switched on yet.',
+    'auth/popup-closed-by-user': 'Sign-in cancelled.',
+    'auth/cancelled-popup-request': 'Sign-in cancelled.',
+    'auth/popup-blocked': 'Your browser blocked the sign-in popup — allow popups and retry.',
+    'auth/account-exists-with-different-credential': 'That email is already registered with a different sign-in method.',
   };
   return map[code] || 'Something went wrong. Please try again.';
 }
@@ -75,7 +80,8 @@ export function AuthProvider({ children }) {
             setUser({ uid: fbUser.uid, email: fbUser.email, points: 0, streak: 0, ...data });
             setStatus('ready');
           } else {
-            setUser({ uid: fbUser.uid, email: fbUser.email });
+            // displayName (from Microsoft) pre-fills the onboarding name field.
+            setUser({ uid: fbUser.uid, email: fbUser.email, displayName: fbUser.displayName });
             setStatus('needsOnboarding');
           }
         });
@@ -144,6 +150,31 @@ export function AuthProvider({ children }) {
     // Live: best-effort anonymous-style demo isn't enabled; nudge to real auth.
     setError('Demo mode is only available offline. Please sign up.');
     return false;
+  }, []);
+
+  // One-tap sign-in with an Imperial Microsoft (Office 365) account. No password,
+  // no reset emails — and it genuinely verifies the @imperial.ac.uk address.
+  const signInMicrosoft = useCallback(async () => {
+    setError('');
+    if (MOCK_MODE) { setError('Microsoft sign-in needs the live app.'); return false; }
+    setBusy(true);
+    try {
+      const { OAuthProvider, signInWithPopup, signOut } = await import('firebase/auth');
+      const provider = new OAuthProvider('microsoft.com');
+      provider.addScope('email');
+      provider.setCustomParameters({ prompt: 'select_account' });
+      const res = await signInWithPopup(auth, provider);
+      const email = res.user?.email || '';
+      if (!isAllowedEmail(email)) {
+        await signOut(auth);
+        setError(`Use your Imperial Microsoft account (${(ALLOWED_EMAIL_DOMAINS || []).join(' or ')}).`);
+        return false;
+      }
+      return true; // onAuthStateChanged -> onboarding (new) or ready (returning)
+    } catch (e) {
+      setError(friendly(e.code || e.message));
+      return false;
+    } finally { setBusy(false); }
   }, []);
 
   const completeOnboarding = useCallback(async ({ name, dept }) => {
@@ -220,7 +251,7 @@ export function AuthProvider({ children }) {
   const value = {
     mode: MODE, status, user, error, busy,
     setError,
-    signUp, signIn, signInDemo, resetPassword, completeOnboarding, signOut: signOutNow,
+    signUp, signIn, signInDemo, signInMicrosoft, resetPassword, completeOnboarding, signOut: signOutNow,
   };
   return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;
 }
