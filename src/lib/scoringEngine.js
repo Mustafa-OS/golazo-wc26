@@ -90,21 +90,66 @@ export function applyStreak(basePoints, streakDays) {
   return Math.round(basePoints * mult);
 }
 
+// --- Slip modes ------------------------------------------------------------
+// NORMAL: picks score independently; one pick may be CAPTAIN -> 2x if correct.
+// POWER (parlay): all-or-nothing — if every live pick lands, the summed value is
+// multiplied (bigger with more picks); a single miss pays 0. Still never < 0.
+export const CAPTAIN_MULT = 2;
+const POWER_MULTIPLIERS = { 2: 1.5, 3: 2, 4: 2.6, 5: 3.3 }; // by # live picks; tunable
+export function powerMultiplier(n) {
+  if (n < 2) return 1;
+  return POWER_MULTIPLIERS[n] || POWER_MULTIPLIERS[5] + 0.4 * (n - 5);
+}
+
+/**
+ * Max points a slip could pay (frozen pick values), used for the live preview.
+ * @param {Array} picks
+ * @param {object} opts { mode:'normal'|'power', captainId }
+ */
+export function slipPotential(picks, opts = {}) {
+  const { mode = 'normal', captainId = null } = opts;
+  if (mode === 'power') {
+    const stake = picks.reduce((s, p) => s + (p.value || 0), 0);
+    return Math.round(stake * powerMultiplier(picks.length));
+  }
+  return picks.reduce(
+    (s, p) => s + (p.value || 0) * (captainId && p.id === captainId ? CAPTAIN_MULT : 1),
+    0
+  );
+}
+
 /**
  * Settle a full day's slip.
  * @param {Array} picks   each { ...prop, side, value }
  * @param {object} statsByPlayer  { [playerId]: normalisedStats }
  * @param {number} streakDays
- * @returns {object} { results, basePoints, total, correctCount }
+ * @param {object} opts   { mode:'normal'|'power', captainId }
+ * @returns {object} { results, basePoints, total, correctCount, newStreak, mode }
  */
-export function settleSlip(picks, statsByPlayer, streakDays = 0) {
+export function settleSlip(picks, statsByPlayer, streakDays = 0, opts = {}) {
+  const { mode = 'normal', captainId = null } = opts;
+
   const results = picks.map((pick) => {
     const actual = statsByPlayer[pick.playerId] || {};
     const r = resolvePick(pick, actual);
-    return { ...pick, ...r };
+    const isCaptain = mode === 'normal' && !!captainId && pick.id === captainId;
+    // Captain doubling applies only in normal mode; power mode is all-or-nothing.
+    const awarded = isCaptain && r.correct ? r.awarded * CAPTAIN_MULT : r.awarded;
+    return { ...pick, ...r, awarded, captain: isCaptain || undefined };
   });
-  const basePoints = results.reduce((s, r) => s + r.awarded, 0);
+
   const correctCount = results.filter((r) => r.correct).length;
+  const live = results.filter((r) => !r.void); // DNP picks don't break a parlay
+
+  let basePoints;
+  if (mode === 'power') {
+    const allHit = live.length > 0 && live.every((r) => r.correct);
+    const stake = live.reduce((s, r) => s + r.value, 0);
+    basePoints = allHit ? Math.round(stake * powerMultiplier(live.length)) : 0;
+  } else {
+    basePoints = results.reduce((s, r) => s + r.awarded, 0);
+  }
+
   const newStreak = correctCount > 0 ? streakDays + 1 : 0;
   return {
     results,
@@ -112,5 +157,7 @@ export function settleSlip(picks, statsByPlayer, streakDays = 0) {
     total: applyStreak(basePoints, streakDays),
     correctCount,
     newStreak,
+    mode,
+    powerMult: mode === 'power' ? powerMultiplier(live.length) : 1,
   };
 }

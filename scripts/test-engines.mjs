@@ -2,7 +2,7 @@
 // imported by BOTH the frontend and the Cloud Functions. Pure JS, no backend.
 //   run:  npm test
 import { buildLine, buildPlayerProps, buildMatchProps, METRICS } from '../src/lib/lineEngine.js';
-import { sideProbability, pickValue, resolvePick, applyStreak, settleSlip } from '../src/lib/scoringEngine.js';
+import { sideProbability, pickValue, resolvePick, applyStreak, settleSlip, slipPotential, powerMultiplier, CAPTAIN_MULT } from '../src/lib/scoringEngine.js';
 
 let passed = 0;
 const eq = (label, got, want) => {
@@ -79,6 +79,32 @@ try {
   eq('voided pick scores 0 in a slip', voided.basePoints, 0);
   eq('voided pick is not counted correct', voided.correctCount, 0);
   ok('voided pick is flagged in results', voided.results[0].void === true);
+
+  // --- Captain (2x in normal mode) ----------------------------------------
+  const p1 = { id: 'a', playerId: 's1', metric: 'goals', line: 0.5, side: 'MORE', value: 10 };
+  const p2 = { id: 'b', playerId: 's2', metric: 'goals', line: 0.5, side: 'MORE', value: 20 };
+  const bothPlay = { s1: played({ goals: 1 }), s2: played({ goals: 1 }) };
+  const capN = settleSlip([p1, p2], bothPlay, 0, { captainId: 'b' });
+  eq('captain doubles its pick (10 + 20*2)', capN.basePoints, 50);
+  ok('captain pick is flagged', capN.results.find((r) => r.id === 'b').captain === true);
+  const capMiss = settleSlip([p1, p2], { s1: played({ goals: 1 }), s2: played({ goals: 0 }) }, 0, { captainId: 'b' });
+  eq('captain miss = 0 for that pick, no negative (just p1=10)', capMiss.basePoints, 10);
+
+  // --- Power Slip (parlay, all-or-nothing) --------------------------------
+  eq('power multiplier scales with picks', powerMultiplier(5), 3.3);
+  const powAll = settleSlip([p1, p2], bothPlay, 0, { mode: 'power' });
+  eq('power: all hit -> (10+20)*1.5', powAll.basePoints, 45);
+  const powMiss = settleSlip([p1, p2], { s1: played({ goals: 1 }), s2: played({ goals: 0 }) }, 0, { mode: 'power' });
+  eq('power: one miss -> 0', powMiss.basePoints, 0);
+  // A DNP pick must NOT break the parlay; it drops out of the live set.
+  const powVoid = settleSlip([p1, p2], { s1: played({ goals: 1 }), s2: { goals: 0 } }, 0, { mode: 'power' });
+  eq('power: void pick ignored, remaining hit -> 10*1 (1 live pick)', powVoid.basePoints, 10);
+
+  // --- slipPotential preview ----------------------------------------------
+  eq('potential: normal sum', slipPotential([p1, p2]), 30);
+  eq('potential: captain doubles', slipPotential([p1, p2], { captainId: 'b' }), 50);
+  eq('potential: power multiplies the stake', slipPotential([p1, p2], { mode: 'power' }), 45);
+  eq('CAPTAIN_MULT is 2', CAPTAIN_MULT, 2);
 
   console.log(`\nENGINE TESTS PASSED — ${passed} assertions.`);
   process.exit(0);
