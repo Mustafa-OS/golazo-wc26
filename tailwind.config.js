@@ -14,8 +14,12 @@ export default {
         line: '#23344f',       // borders
         more: '#C6FF3E',       // electric lime  (MORE)
         less: '#FF5C7A',       // hot coral      (LESS)
-        gold: '#FFC83D',       // points / streak
+        gold: '#FFC83D',       // points / streak / trophy
         mist: '#8DA0BC',       // muted text
+        // festive World-Cup accents (confetti, stat tiles, gradients)
+        azure: '#37C5FF',      // vivid blue
+        grape: '#9B6CFF',      // purple
+        flame: '#FF8A3D',      // orange
       },
       boxShadow: {
         glow: '0 0 0 1px rgba(198,255,62,0.4), 0 8px 30px -8px rgba(198,255,62,0.35)',

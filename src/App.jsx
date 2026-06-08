@@ -7,6 +7,7 @@ import { buildMatchdays, usDateKey, matchdayKickoff, LOCK_LEAD_MS } from './lib/
 import { subscribeMyGroups, createGroup, joinGroup } from './lib/groupStore.js';
 import AuthScreen from './pages/AuthScreen.jsx';
 import Onboarding from './pages/Onboarding.jsx';
+import Home from './pages/Home.jsx';
 import Today from './pages/Today.jsx';
 import LeaderboardPage from './pages/LeaderboardPage.jsx';
 import GroupsPage from './pages/GroupsPage.jsx';
@@ -17,8 +18,9 @@ import HowToPlay from './components/HowToPlay.jsx';
 const MAX_PICKS = 5;
 
 const NAV = [
-  { id: 'today', label: 'Today', icon: '⚽' },
-  { id: 'board', label: 'Leaderboard', icon: '🏆' },
+  { id: 'home', label: 'Home', icon: '🏠' },
+  { id: 'today', label: 'Matches', icon: '⚽' },
+  { id: 'board', label: 'Board', icon: '🏆' },
   { id: 'groups', label: 'Groups', icon: '👥' },
   { id: 'me', label: 'Profile', icon: '👤' },
 ];
@@ -62,7 +64,7 @@ function Splash() {
 function MainApp() {
   const { user } = useAuth();
   const { matches, loading, leaderboard, weekly } = useData();
-  const [tab, setTab] = useState('today');
+  const [tab, setTab] = useState('home');
   const [picks, setPicks] = useState([]); // [{ ...prop, side, value }]
   const [slipOpen, setSlipOpen] = useState(false);
   const [locked, setLocked] = useState(false);
@@ -214,6 +216,16 @@ function MainApp() {
       <Header picks={picks} max={MAX_PICKS} onOpenSlip={() => setSlipOpen(true)} onHelp={() => setShowHelp(true)} />
 
       <main className="flex-1 px-4 pb-28 pt-2">
+        {tab === 'home' && (
+          <Home
+            matches={matches}
+            rows={rows}
+            count={picks.length}
+            max={MAX_PICKS}
+            onGoToday={() => setTab('today')}
+            onInvite={() => setTab('me')}
+          />
+        )}
         {tab === 'today' &&
           (loading ? (
             <TodaySkeleton />
@@ -327,7 +339,7 @@ function EmptyToday() {
 function BottomNav({ tab, setTab }) {
   return (
     <nav className="fixed inset-x-0 bottom-0 z-20 mx-auto max-w-md border-t border-line bg-ink/95 backdrop-blur">
-      <div className="grid grid-cols-4">
+      <div className="grid grid-cols-5">
         {NAV.map((n) => (
           <button
             key={n.id}
