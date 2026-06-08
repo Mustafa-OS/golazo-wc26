@@ -88,10 +88,6 @@ async function resolveMatches(key, date, season) {
   if (!finished.length) return { finished: 0, settled: 0 };
   const finishedIds = new Set(finished.map((f) => f.id));
 
-  // Pull + cache per-player stats for each finished fixture once.
-  const statsByMatch = {};
-  for (const fx of finished) statsByMatch[fx.id] = await api.getPlayerStats(key, fx.id);
-
   // Candidate slips = any unsettled slip referencing a finished match.
   const candidates = new Map();
   for (const id of finishedIds) {
@@ -99,15 +95,23 @@ async function resolveMatches(key, date, season) {
     q.docs.forEach((d) => candidates.set(d.id, d));
   }
 
-  let settledCount = 0;
-  for (const slipDoc of candidates.values()) {
-    const slip = slipDoc.data();
-    if (slip.settled) continue;
-    // Settle a slip as a WHOLE only once ALL its matches are finished — required
-    // for Power Play (parlay) and harmless for normal slips.
-    const allDone = (slip.matchIds || []).every((mid) => finishedIds.has(mid));
-    if (!allDone) continue;
+  // Settle a slip as a WHOLE only once ALL its matches are finished — required
+  // for Power Play (parlay) and harmless for normal slips.
+  const settleable = [...candidates.values()].filter((d) => {
+    const s = d.data();
+    return !s.settled && (s.matchIds || []).every((mid) => finishedIds.has(mid));
+  });
 
+  // Pull player stats ONLY for matches on a slip we're settling right now — so we
+  // never re-fetch stats for matches whose slips are already done.
+  const needed = new Set();
+  settleable.forEach((d) => (d.data().matchIds || []).forEach((mid) => needed.add(mid)));
+  const statsByMatch = {};
+  for (const mid of needed) statsByMatch[mid] = await api.getPlayerStats(key, mid);
+
+  let settledCount = 0;
+  for (const slipDoc of settleable) {
+    const slip = slipDoc.data();
     const statsByPlayer = {};
     for (const mid of slip.matchIds) Object.assign(statsByPlayer, statsByMatch[mid] || {});
 

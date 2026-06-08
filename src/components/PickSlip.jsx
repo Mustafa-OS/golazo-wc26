@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { slipPotential, powerMultiplier } from '../lib/scoringEngine.js';
+import { slipShareBlob } from '../lib/shareCard.js';
 
 // Actual settled payout for the results view (mirrors settleSlip's base points).
 function computeScored(picks, mode) {
@@ -15,29 +16,42 @@ export default function PickSlip({
   picks, max, locked, mode = 'normal', captainId = null,
   onSetMode, onSetCaptain, onRemove, onLock, onClose,
 }) {
-  const [shared, setShared] = useState(false);
+  const [shared, setShared] = useState('');
   const anySettled = picks.some((p) => p.correct !== undefined);
   const editable = !locked && !anySettled;
   const potential = slipPotential(picks, { mode, captainId });
   const scored = computeScored(picks, mode);
   const isPower = mode === 'power';
 
+  const [busyShare, setBusyShare] = useState(false);
+
   async function shareSlip() {
     const url = window.location.origin + window.location.pathname;
-    const lines = picks.map(
-      (p) => `${p.side === 'MORE' ? '▲' : '▼'} ${p.playerName} ${p.side} ${p.label} ${p.line}${captainId === p.id ? ' (★C)' : ''}`
-    );
     const tag = isPower ? '⚡ POWER PLAY' : 'My GOLAZO. slip';
-    const text = `${tag} 🔥\n${lines.join('\n')}\nMax ${potential} pts · play: ${url}`;
+    const caption = `${tag} 🔥 — ${potential} pts on the line. Play: ${url}`;
+    setBusyShare(true);
     try {
-      if (navigator.share) await navigator.share({ title: 'My GOLAZO. slip', text });
-      else {
-        await navigator.clipboard.writeText(text);
-        setShared(true);
-        setTimeout(() => setShared(false), 2000);
+      const blob = await slipShareBlob({ picks, potential, mode, captainId, url });
+      const file = new File([blob], 'golazo-slip.png', { type: 'image/png' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], text: caption, title: 'My GOLAZO. slip' });
+      } else {
+        // No file-share support (most desktops) -> download the image.
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'golazo-slip.png';
+        a.click();
+        URL.revokeObjectURL(a.href);
+        flash('Slip image saved ✓');
       }
-    } catch { /* dismissed */ }
+    } catch {
+      // Last resort: copy the caption text.
+      try { await navigator.clipboard.writeText(caption); flash('Copied ✓'); } catch { /* dismissed */ }
+    } finally {
+      setBusyShare(false);
+    }
   }
+  function flash(msg) { setShared(msg); setTimeout(() => setShared(''), 2500); }
 
   return (
     <div className="fixed inset-0 z-30 flex flex-col justify-end">
@@ -217,9 +231,10 @@ export default function PickSlip({
         {picks.length > 0 && (
           <button
             onClick={shareSlip}
-            className="mt-3 w-full rounded-2xl border border-line bg-panel2 py-3 text-sm font-bold text-more transition active:scale-[0.98]"
+            disabled={busyShare}
+            className="mt-3 w-full rounded-2xl border border-line bg-panel2 py-3 text-sm font-bold text-more transition active:scale-[0.98] disabled:opacity-60"
           >
-            {shared ? 'Slip copied ✓' : '📤 Share my slip'}
+            {busyShare ? 'Making image…' : shared || '📤 Share my slip'}
           </button>
         )}
 

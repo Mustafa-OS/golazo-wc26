@@ -1,9 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
+import { qrDataUrl } from '../lib/shareCard.js';
 
 export default function Profile({ rows }) {
   const { user, signOut, mode } = useAuth();
   const [copied, setCopied] = useState(false);
+  const [qr, setQr] = useState('');
+
+  // QR pointing at wherever the app is hosted (always current).
+  useEffect(() => {
+    qrDataUrl(window.location.origin + window.location.pathname, 360).then(setQr).catch(() => {});
+  }, []);
+
+  function downloadQr() {
+    const a = document.createElement('a');
+    a.href = qr; a.download = 'golazo-qr.png'; a.click();
+  }
 
   async function shareApp() {
     const url = window.location.origin + window.location.pathname;
@@ -67,9 +79,24 @@ export default function Profile({ rows }) {
         </ul>
       </div>
 
+      <div className="mt-5 rounded-2xl border border-line bg-panel p-4 text-center">
+        <div className="text-xs font-bold uppercase tracking-wide text-mist">Invite by QR</div>
+        {qr ? (
+          <img src={qr} alt="Scan to join Golazo" className="mx-auto mt-3 h-44 w-44 rounded-xl" />
+        ) : (
+          <div className="mx-auto mt-3 h-44 w-44 animate-pulse rounded-xl bg-panel2" />
+        )}
+        <p className="mt-2 text-[11px] font-semibold text-mist">Point a phone camera here to open Golazo.</p>
+        {qr && (
+          <button onClick={downloadQr} className="mt-2 text-xs font-bold text-more underline-offset-2 hover:underline">
+            Download QR (for posters)
+          </button>
+        )}
+      </div>
+
       <button
         onClick={shareApp}
-        className="mt-5 w-full rounded-2xl bg-more py-3.5 font-display text-lg tracking-wide text-ink transition active:scale-[0.98]"
+        className="mt-3 w-full rounded-2xl bg-more py-3.5 font-display text-lg tracking-wide text-ink transition active:scale-[0.98]"
       >
         {copied ? 'LINK COPIED ✓' : '📣 INVITE YOUR MATES'}
       </button>
