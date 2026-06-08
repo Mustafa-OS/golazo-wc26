@@ -112,3 +112,12 @@ export const MOCK_LEADERBOARD = [
   { uid: 'u4', name: 'Wei L.', dept: 'Maths', points: 297, streak: 1 },
   { uid: 'u5', name: 'Sofia R.', dept: 'Bioeng', points: 244, streak: 0 },
 ];
+
+// A separate "this week" board (different order/points) for the demo.
+export const MOCK_WEEKLY = [
+  { uid: 'u2', name: 'Priya S.', dept: 'Computing', points: 142, streak: 2 },
+  { uid: 'me', name: 'You', dept: 'Design Eng', points: 121, streak: 3 },
+  { uid: 'u1', name: 'Aryan K.', dept: 'EEE', points: 98, streak: 4 },
+  { uid: 'u4', name: 'Wei L.', dept: 'Maths', points: 76, streak: 1 },
+  { uid: 'u5', name: 'Sofia R.', dept: 'Bioeng', points: 54, streak: 0 },
+];

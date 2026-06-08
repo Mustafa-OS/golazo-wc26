@@ -12,7 +12,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { MOCK_MODE, db } from '../firebase.js';
-import { MOCK_MATCHES, MOCK_LEADERBOARD } from '../lib/mockData.js';
+import { MOCK_MATCHES, MOCK_LEADERBOARD, MOCK_WEEKLY } from '../lib/mockData.js';
 import { buildMatchProps } from '../lib/lineEngine.js';
 
 const DataCtx = createContext(null);
@@ -26,20 +26,23 @@ export function DataProvider({ children }) {
   const [matches, setMatches] = useState(() => (MOCK_MODE ? buildMockMatches() : []));
   const [loading, setLoading] = useState(!MOCK_MODE);
   const [leaderboard, setLeaderboard] = useState(() => (MOCK_MODE ? MOCK_LEADERBOARD : []));
+  const [weekly, setWeekly] = useState(() => (MOCK_MODE ? MOCK_WEEKLY : []));
 
-  // Imperial leaderboard (the `leaderboards/imperial` board the function rolls up).
+  // Leaderboards the functions roll up: all-time (`imperial`) + `weekly`.
   useEffect(() => {
     if (MOCK_MODE) return;
-    let unsub = () => {};
+    let unsubs = [];
     (async () => {
       const { doc, onSnapshot } = await import('firebase/firestore');
-      unsub = onSnapshot(
-        doc(db, 'leaderboards', 'imperial'),
-        (snap) => setLeaderboard(snap.exists() ? snap.data().board || [] : []),
-        (err) => console.error('leaderboard subscription error', err)
-      );
+      const sub = (id, set) =>
+        onSnapshot(
+          doc(db, 'leaderboards', id),
+          (snap) => set(snap.exists() ? snap.data().board || [] : []),
+          (err) => console.error(`leaderboard ${id} subscription error`, err)
+        );
+      unsubs = [sub('imperial', setLeaderboard), sub('weekly', setWeekly)];
     })();
-    return () => unsub();
+    return () => unsubs.forEach((u) => u && u());
   }, []);
 
   useEffect(() => {
@@ -93,5 +96,5 @@ export function DataProvider({ children }) {
     };
   }, []);
 
-  return <DataCtx.Provider value={{ matches, loading, leaderboard }}>{children}</DataCtx.Provider>;
+  return <DataCtx.Provider value={{ matches, loading, leaderboard, weekly }}>{children}</DataCtx.Provider>;
 }

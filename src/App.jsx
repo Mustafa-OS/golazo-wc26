@@ -59,7 +59,7 @@ function Splash() {
 
 function MainApp() {
   const { user } = useAuth();
-  const { matches, loading, leaderboard } = useData();
+  const { matches, loading, leaderboard, weekly } = useData();
   const [tab, setTab] = useState('today');
   const [picks, setPicks] = useState([]); // [{ ...prop, side, value }]
   const [slipOpen, setSlipOpen] = useState(false);
@@ -199,7 +199,7 @@ function MainApp() {
               locked={effectiveLocked}
             />
           ))}
-        {tab === 'board' && <LeaderboardPage rows={rows} meUid={user.uid} groups={groups} />}
+        {tab === 'board' && <LeaderboardPage rows={rows} weekly={weekly} meUid={user.uid} groups={groups} />}
         {tab === 'groups' && (
           <GroupsPage
             groups={groups}

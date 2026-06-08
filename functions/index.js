@@ -74,62 +74,96 @@ async function generateProps(key, date, season) {
   return { fixtures: fixtures.length, props: propCount };
 }
 
+// Monday (UTC) of the current week, as YYYY-MM-DD — the weekly board cutoff.
+function startOfWeekISO() {
+  const d = new Date();
+  const offset = (d.getUTCDay() + 6) % 7; // 0 = Monday
+  d.setUTCDate(d.getUTCDate() - offset);
+  return d.toISOString().slice(0, 10);
+}
+
 async function resolveMatches(key, date, season) {
   const fixtures = await api.getFixtures(key, date, season);
   const finished = fixtures.filter((f) => f.status === 'FT');
+  if (!finished.length) return { finished: 0, settled: 0 };
+  const finishedIds = new Set(finished.map((f) => f.id));
+
+  // Pull + cache per-player stats for each finished fixture once.
+  const statsByMatch = {};
+  for (const fx of finished) statsByMatch[fx.id] = await api.getPlayerStats(key, fx.id);
+
+  // Candidate slips = any unsettled slip referencing a finished match.
+  const candidates = new Map();
+  for (const id of finishedIds) {
+    const q = await db.collection('slips').where('matchIds', 'array-contains', id).get();
+    q.docs.forEach((d) => candidates.set(d.id, d));
+  }
+
   let settledCount = 0;
+  for (const slipDoc of candidates.values()) {
+    const slip = slipDoc.data();
+    if (slip.settled) continue;
+    // Settle a slip as a WHOLE only once ALL its matches are finished — required
+    // for Power Play (parlay) and harmless for normal slips.
+    const allDone = (slip.matchIds || []).every((mid) => finishedIds.has(mid));
+    if (!allDone) continue;
 
-  for (const fx of finished) {
-    const matchRef = db.doc(`matches/${fx.id}`);
-    const snap = await matchRef.get();
-    if (snap.get('settled')) continue;
+    const statsByPlayer = {};
+    for (const mid of slip.matchIds) Object.assign(statsByPlayer, statsByMatch[mid] || {});
 
-    const statsByPlayer = await api.getPlayerStats(key, fx.id);
-    const slips = await db.collection('slips').where('matchIds', 'array-contains', fx.id).get();
+    const userRef = db.doc(`users/${slip.uid}`);
+    const priorStreak = (await userRef.get()).get('streak') || 0;
+    const { results, total, correctCount } = settleSlip(
+      slip.picks, statsByPlayer, priorStreak,
+      { mode: slip.mode, captainId: slip.captainId }
+    );
+
     const writes = db.batch();
-
-    for (const slipDoc of slips.docs) {
-      const slip = slipDoc.data();
-      const picksForMatch = slip.picks.filter((p) => p.matchId === fx.id);
-
-      // The user's streak coming into today drives the bonus and the next value.
-      const userRef = db.doc(`users/${slip.uid}`);
-      const priorStreak = (await userRef.get()).get('streak') || 0;
-
-      const { results, total } = settleSlip(picksForMatch, statsByPlayer, priorStreak);
-
-      const mergedPicks = slip.picks.map((p) =>
-        p.matchId === fx.id ? results.find((r) => r.id === p.id) || p : p
-      );
-      const slipUpdate = { picks: mergedPicks };
-
-      // One write per doc per batch: fold points + (maybe) streak together.
-      const userUpdate = { points: FieldValue.increment(total) };
-      const fullySettled = mergedPicks.every((p) => p.correct !== undefined);
-      if (fullySettled && !slip.streakApplied) {
-        const correctCount = mergedPicks.filter((p) => p.correct).length;
-        userUpdate.streak = correctCount > 0 ? priorStreak + 1 : 0; // daily streak roll
-        slipUpdate.streakApplied = true;
-      }
-
-      writes.set(userRef, userUpdate, { merge: true });
-      writes.update(slipDoc.ref, slipUpdate);
-    }
-    writes.update(matchRef, { settled: true });
+    writes.update(slipDoc.ref, { picks: results, settled: true, scored: total, settledAt: Date.now() });
+    writes.set(userRef, {
+      points: FieldValue.increment(total),
+      streak: correctCount > 0 ? priorStreak + 1 : 0,
+    }, { merge: true });
     await writes.commit();
     settledCount++;
-    console.log(`Settled ${fx.id}: ${slips.size} slips`);
+    console.log(`Settled slip ${slipDoc.id}: ${total} pts (${slip.mode || 'normal'})`);
   }
+
+  // Mark finished matches for the UI.
+  const mb = db.batch();
+  for (const fx of finished) mb.set(db.doc(`matches/${fx.id}`), { settled: true, status: 'FT' }, { merge: true });
+  await mb.commit();
+
   return { finished: finished.length, settled: settledCount };
 }
 
 async function recompute() {
+  // All-time board from cumulative user points.
   const users = await db.collection('users').orderBy('points', 'desc').limit(500).get();
-  const board = users.docs.map((d, i) => ({
+  const allTime = users.docs.map((d, i) => ({
     rank: i + 1, uid: d.id, name: d.get('name'), dept: d.get('dept'), points: d.get('points') || 0,
   }));
-  await db.doc('leaderboards/imperial').set({ board, updatedAt: Date.now() });
-  return { ranked: board.length };
+  await db.doc('leaderboards/imperial').set({ board: allTime, updatedAt: Date.now() });
+
+  // Weekly board: sum settled slip scores since Monday, grouped by user.
+  const weekStart = startOfWeekISO();
+  const meta = {};
+  users.docs.forEach((d) => { meta[d.id] = { name: d.get('name'), dept: d.get('dept') }; });
+  const slips = await db.collection('slips').where('day', '>=', weekStart).get();
+  const byUid = {};
+  slips.docs.forEach((d) => {
+    const s = d.data();
+    if (s.settled) byUid[s.uid] = (byUid[s.uid] || 0) + (s.scored || 0);
+  });
+  const weekly = Object.entries(byUid)
+    .map(([uid, points]) => ({ uid, points, name: meta[uid]?.name, dept: meta[uid]?.dept }))
+    .filter((r) => r.name) // known users only
+    .sort((a, b) => b.points - a.points)
+    .slice(0, 500)
+    .map((r, i) => ({ rank: i + 1, ...r }));
+  await db.doc('leaderboards/weekly').set({ board: weekly, weekStart, updatedAt: Date.now() });
+
+  return { ranked: allTime.length, weekly: weekly.length };
 }
 
 // ---------------------------------------------------------------------------
