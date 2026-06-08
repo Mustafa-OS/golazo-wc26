@@ -73,40 +73,6 @@ export async function getSquad(apiKey, teamId) {
   }));
 }
 
-/**
- * Full player names via /players (firstname + lastname), paginated. Positions
- * from this feed are unreliable pre-tournament (no games yet), so callers should
- * keep squad positions and only use this to upgrade the display name.
- * @returns {object} { [playerId]: fullName }
- */
-export async function getPlayerNames(apiKey, teamId, season = SEASON) {
-  const names = {};
-  let page = 1;
-  for (;;) {
-    const url = new URL(BASE + '/players');
-    url.searchParams.set('team', teamId);
-    url.searchParams.set('season', season);
-    url.searchParams.set('page', page);
-    const res = await fetch(url, { headers: { 'x-apisports-key': apiKey } });
-    if (!res.ok) throw new Error(`API-Football /players -> ${res.status}`);
-    const json = await res.json();
-    if (json.errors && Object.keys(json.errors).length) throw new Error(`API-Football errors: ${JSON.stringify(json.errors)}`);
-    for (const r of json.response || []) {
-      // Prefer the clean common name ("Álvaro Fidalgo") when it's not abbreviated;
-      // some commons are still initials ("G. Ochoa") -> use the full legal name.
-      const common = r.player.name || '';
-      const legal = [r.player.firstname, r.player.lastname].filter(Boolean).join(' ');
-      const abbreviated = /(^|\s)[A-Z]\.\s/.test(common);
-      const full = (!abbreviated && common) ? common : (legal || common);
-      if (full) names[String(r.player.id)] = full;
-    }
-    const total = json.paging?.total || 1;
-    if (page >= total) break;
-    page++;
-  }
-  return names;
-}
-
 /** Starting XI + bench for a fixture, with our position buckets. */
 export async function getLineups(apiKey, fixtureId) {
   const rows = await call('/fixtures/lineups', { fixture: fixtureId }, apiKey);
