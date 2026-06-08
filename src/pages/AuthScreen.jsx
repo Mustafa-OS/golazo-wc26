@@ -8,19 +8,34 @@ const PERKS = [
 ];
 
 export default function AuthScreen() {
-  const { signIn, signUp, signInDemo, error, busy, setError, mode } = useAuth();
+  const { signIn, signUp, signInDemo, resetPassword, error, busy, setError, mode } = useAuth();
   const [tab, setTab] = useState('signup'); // 'signup' | 'signin'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const [notice, setNotice] = useState(''); // success messages (e.g. reset sent)
 
   async function submit(e) {
     e.preventDefault();
-    if (tab === 'signup') await signUp(email, password);
-    else await signIn(email, password);
+    setNotice('');
+    if (tab === 'signup') {
+      if (password !== confirm) { setError('Passwords don’t match.'); return; }
+      await signUp(email, password);
+    } else {
+      await signIn(email, password);
+    }
+  }
+
+  async function forgot() {
+    setNotice('');
+    const ok = await resetPassword(email);
+    if (ok) setNotice(`If an account exists for ${email.trim()}, a reset link is on its way — check your inbox (and spam).`);
   }
 
   function switchTab(t) {
     setError('');
+    setNotice('');
+    setConfirm('');
     setTab(t);
   }
 
@@ -77,7 +92,7 @@ export default function AuthScreen() {
             />
             {tab === 'signup' && (
               <p className="mt-1.5 px-1 text-[11px] font-semibold text-mist">
-                Imperial email required — keeps the board all-Imperial.
+                Imperial email required (@imperial.ac.uk or @ic.ac.uk) — keeps the board all-Imperial.
               </p>
             )}
           </div>
@@ -90,9 +105,37 @@ export default function AuthScreen() {
             className="w-full rounded-xl border border-line bg-panel2 px-3.5 py-3 text-sm font-semibold outline-none placeholder:text-mist focus:border-more"
           />
 
+          {tab === 'signup' && (
+            <input
+              type="password"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              placeholder="Confirm password"
+              autoComplete="new-password"
+              className="w-full rounded-xl border border-line bg-panel2 px-3.5 py-3 text-sm font-semibold outline-none placeholder:text-mist focus:border-more"
+            />
+          )}
+
+          {tab === 'signin' && (
+            <button
+              type="button"
+              onClick={forgot}
+              disabled={busy}
+              className="block px-1 text-left text-[12px] font-semibold text-more underline-offset-2 hover:underline disabled:opacity-50"
+            >
+              Forgot password?
+            </button>
+          )}
+
           {error && (
             <div className="rounded-xl border border-less/40 bg-less/10 px-3.5 py-2.5 text-sm font-semibold text-less">
               {error}
+            </div>
+          )}
+
+          {notice && (
+            <div className="rounded-xl border border-more/40 bg-more/10 px-3.5 py-2.5 text-sm font-semibold text-more">
+              {notice}
             </div>
           )}
 

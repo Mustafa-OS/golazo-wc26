@@ -1,13 +1,12 @@
 // ============================================================================
 // APP CONFIG
 // ----------------------------------------------------------------------------
-// Audience gate. Set ALLOWED_EMAIL_DOMAIN to a domain to restrict who can sign
-// up (e.g. '@imperial.ac.uk' for Imperial-only), or to null to open the app to
-// ANY email. This single flag is the only change to go Imperial-only <-> open.
+// Audience gate. List the email domains allowed to sign up (Imperial uses both
+// the long and short forms), or set to null to open the app to ANY email. This
+// is the only change to go Imperial-only <-> open.
 //
-// Note: this is a friendly client-side check. To *enforce* it (so nobody can
-// fake an address), enable Firebase email verification and gate on verified —
-// a post-launch hardening step.
+// Note: this is a friendly client-side check. To *enforce* it server-side you'd
+// gate on a verified email — a deliberate non-goal for now (kept low-friction).
 // ============================================================================
 
-export const ALLOWED_EMAIL_DOMAIN = '@imperial.ac.uk';
+export const ALLOWED_EMAIL_DOMAINS = ['@imperial.ac.uk', '@ic.ac.uk'];

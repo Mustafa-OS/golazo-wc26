@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 
-// Common Imperial departments for the picker (free text still allowed).
+// Imperial departments for the picker (optional; free text still allowed).
 const DEPARTMENTS = [
-  'Computing', 'EEE', 'Mechanical Eng', 'Aeronautics', 'Civil Eng',
-  'Chemical Eng', 'Bioengineering', 'Materials', 'Design Eng', 'Mathematics',
-  'Physics', 'Chemistry', 'Life Sciences', 'Medicine', 'Business School',
-  'Earth Science & Eng',
+  'Aeronautics', 'Bioengineering', 'Chemical Engineering',
+  'Civil and Environmental Engineering', 'Computing', 'Design Engineering',
+  'Earth Science and Engineering', 'Electrical and Electronic Engineering',
+  'Materials', 'Mechanical Engineering', 'Medicine', 'Business School',
+  'Maths', 'Physics', 'Chemistry', 'Life Sciences',
 ];
 
 export default function Onboarding() {
@@ -47,33 +48,18 @@ export default function Onboarding() {
 
         <div>
           <label className="mb-1.5 block px-1 text-xs font-bold uppercase tracking-wide text-mist">
-            Department
+            Department <span className="text-mist/70">· optional</span>
           </label>
-          <input
+          <select
             value={dept}
             onChange={(e) => setDept(e.target.value)}
-            placeholder="Start typing…"
-            list="dept-list"
-            maxLength={28}
-            className="w-full rounded-xl border border-line bg-panel2 px-3.5 py-3 text-sm font-semibold outline-none placeholder:text-mist focus:border-more"
-          />
-          <datalist id="dept-list">
-            {DEPARTMENTS.map((d) => <option key={d} value={d} />)}
-          </datalist>
-          <div className="no-scrollbar mt-2 flex gap-2 overflow-x-auto">
-            {DEPARTMENTS.slice(0, 6).map((d) => (
-              <button
-                key={d}
-                type="button"
-                onClick={() => setDept(d)}
-                className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition ${
-                  dept === d ? 'bg-more text-ink' : 'border border-line bg-panel text-mist'
-                }`}
-              >
-                {d}
-              </button>
-            ))}
-          </div>
+            className={`w-full appearance-none rounded-xl border border-line bg-panel2 px-3.5 py-3 text-sm font-semibold outline-none focus:border-more ${
+              dept ? 'text-white' : 'text-mist'
+            }`}
+          >
+            <option value="">Select your department (or skip)</option>
+            {DEPARTMENTS.map((d) => <option key={d} value={d} className="text-white">{d}</option>)}
+          </select>
         </div>
 
         {error && (

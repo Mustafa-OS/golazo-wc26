@@ -11,7 +11,7 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { MOCK_MODE, EMULATOR_MODE, auth, db } from '../firebase.js';
-import { ALLOWED_EMAIL_DOMAIN } from '../config.js';
+import { ALLOWED_EMAIL_DOMAINS } from '../config.js';
 import * as mock from '../lib/mockAuth.js';
 
 export const MODE = MOCK_MODE ? 'mock' : EMULATOR_MODE ? 'emulator' : 'live';
@@ -33,10 +33,11 @@ function friendly(code) {
   return map[code] || 'Something went wrong. Please try again.';
 }
 
-// When ALLOWED_EMAIL_DOMAIN is null the app is open to any email.
+// When ALLOWED_EMAIL_DOMAINS is null/empty the app is open to any email.
 function isAllowedEmail(email) {
-  if (!ALLOWED_EMAIL_DOMAIN) return true;
-  return email.trim().toLowerCase().endsWith(ALLOWED_EMAIL_DOMAIN);
+  if (!ALLOWED_EMAIL_DOMAINS || !ALLOWED_EMAIL_DOMAINS.length) return true;
+  const e = email.trim().toLowerCase();
+  return ALLOWED_EMAIL_DOMAINS.some((d) => e.endsWith(d));
 }
 
 export function AuthProvider({ children }) {
@@ -92,7 +93,7 @@ export function AuthProvider({ children }) {
   const signUp = useCallback(async (email, password) => {
     setError('');
     if (!isAllowedEmail(email)) {
-      setError(`Use your Imperial email (${ALLOWED_EMAIL_DOMAIN}).`);
+      setError(`Use your Imperial email (${(ALLOWED_EMAIL_DOMAINS || []).join(' or ')}).`);
       return false;
     }
     if (!password || password.length < 6) { setError(friendly('auth/weak-password')); return false; }
@@ -147,12 +148,13 @@ export function AuthProvider({ children }) {
 
   const completeOnboarding = useCallback(async ({ name, dept }) => {
     setError('');
-    if (!name?.trim() || !dept?.trim()) { setError('Add your name and department.'); return false; }
+    if (!name?.trim()) { setError('Add a display name to continue.'); return false; }
+    const cleanDept = (dept || '').trim(); // department is optional
     setBusy(true);
     try {
       if (MOCK_MODE) {
         const u = mock.currentUser();
-        const updated = mock.updateProfile(u.uid, { name: name.trim(), dept: dept.trim(), onboarded: true });
+        const updated = mock.updateProfile(u.uid, { name: name.trim(), dept: cleanDept, onboarded: true });
         setUser(updated);
         setStatus('ready');
       } else {
@@ -164,7 +166,7 @@ export function AuthProvider({ children }) {
             uid: fbUser.uid,
             email: fbUser.email,
             name: name.trim(),
-            dept: dept.trim(),
+            dept: cleanDept,
             points: 0,
             streak: 0,
             onboarded: true,
@@ -174,6 +176,29 @@ export function AuthProvider({ children }) {
         );
         // onSnapshot flips status to 'ready'
       }
+      return true;
+    } catch (e) {
+      setError(friendly(e.code || e.message));
+      return false;
+    } finally { setBusy(false); }
+  }, []);
+
+  // Send a password-reset email (so a forgotten password never loses an account).
+  const resetPassword = useCallback(async (email) => {
+    setError('');
+    if (!email?.trim()) { setError('Enter your email above first, then tap reset.'); return false; }
+    if (!isAllowedEmail(email)) {
+      setError(`Use your Imperial email (${(ALLOWED_EMAIL_DOMAINS || []).join(' or ')}).`);
+      return false;
+    }
+    setBusy(true);
+    try {
+      if (!MOCK_MODE) {
+        const { sendPasswordResetEmail } = await import('firebase/auth');
+        await sendPasswordResetEmail(auth, email.trim().toLowerCase());
+      }
+      // Mock mode has no email; resolve as if sent. Live uses Firebase's own
+      // reset email + flow (no extra pages to build).
       return true;
     } catch (e) {
       setError(friendly(e.code || e.message));
@@ -195,7 +220,7 @@ export function AuthProvider({ children }) {
   const value = {
     mode: MODE, status, user, error, busy,
     setError,
-    signUp, signIn, signInDemo, completeOnboarding, signOut: signOutNow,
+    signUp, signIn, signInDemo, resetPassword, completeOnboarding, signOut: signOutNow,
   };
   return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;
 }
