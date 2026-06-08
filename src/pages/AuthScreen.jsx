@@ -1,18 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 
-// Microsoft's four-square mark (used on its official "Sign in with Microsoft" button).
-function MicrosoftLogo() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden>
-      <rect x="0" y="0" width="7" height="7" fill="#F25022" />
-      <rect x="9" y="0" width="7" height="7" fill="#7FBA00" />
-      <rect x="0" y="9" width="7" height="7" fill="#00A4EF" />
-      <rect x="9" y="9" width="7" height="7" fill="#FFB900" />
-    </svg>
-  );
-}
-
 const PERKS = [
   'Tap MORE / LESS on real World Cup player lines',
   'Best 5 picks a match day — no money, just points',
@@ -20,7 +8,7 @@ const PERKS = [
 ];
 
 export default function AuthScreen() {
-  const { signIn, signUp, signInDemo, signInMicrosoft, resetPassword, error, busy, setError, mode } = useAuth();
+  const { signIn, signUp, signInDemo, resetPassword, error, busy, setError, mode } = useAuth();
   const [tab, setTab] = useState('signup'); // 'signup' | 'signin'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -75,27 +63,6 @@ export default function AuthScreen() {
 
       {/* auth card */}
       <div className="mt-7 rounded-3xl border border-line bg-panel p-5">
-        {mode === 'live' && (
-          <>
-            <button
-              onClick={signInMicrosoft}
-              disabled={busy}
-              className="flex w-full items-center justify-center gap-2.5 rounded-2xl bg-white py-3.5 text-sm font-bold text-[#1b1b1b] transition active:scale-[0.98] disabled:opacity-60"
-            >
-              <MicrosoftLogo /> Continue with Microsoft
-            </button>
-            <p className="mt-2 px-1 text-center text-[11px] font-semibold text-mist">
-              Sign in with your Imperial account — no password to remember.
-            </p>
-            {error && (
-              <div className="mt-3 rounded-xl border border-less/40 bg-less/10 px-3.5 py-2.5 text-sm font-semibold text-less">
-                {error}
-              </div>
-            )}
-          </>
-        )}
-        {mode !== 'live' && (
-        <>
         <div className="mb-4 grid grid-cols-2 gap-1 rounded-xl bg-panel2 p-1">
           {[
             { id: 'signup', label: 'Create account' },
@@ -180,8 +147,6 @@ export default function AuthScreen() {
             {busy ? 'One sec…' : tab === 'signup' ? 'CREATE ACCOUNT' : 'SIGN IN'}
           </button>
         </form>
-        </>
-        )}
 
         {mode === 'mock' && (
           <>
