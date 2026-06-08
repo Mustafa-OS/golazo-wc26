@@ -17,7 +17,9 @@
 
 const BASE = 'https://v3.football.api-sports.io';
 const LEAGUE_WORLD_CUP = 1;
-const SEASON = 2026;
+// Configurable so go-live is just an env change and we can validate the pipeline
+// against a free season (2022-2024) before upgrading to Pro for 2026.
+const SEASON = Number(process.env.WC_SEASON) || 2026;
 
 // Map API-Football's position strings to our G/D/M/F buckets. The squads
 // endpoint says "Attacker" (A); lineups say "F" — fold both to F.
@@ -41,8 +43,8 @@ async function call(path, params, apiKey) {
 }
 
 /** All World Cup fixtures (optionally for a single date YYYY-MM-DD). */
-export async function getFixtures(apiKey, date) {
-  const params = { league: LEAGUE_WORLD_CUP, season: SEASON };
+export async function getFixtures(apiKey, date, season = SEASON) {
+  const params = { league: LEAGUE_WORLD_CUP, season };
   if (date) params.date = date;
   const rows = await call('/fixtures', params, apiKey);
   return rows.map((r) => ({
