@@ -88,30 +88,34 @@ export default function PickSlip({
         {/* mode selector (editable only) */}
         {editable && picks.length > 0 && (
           <div className="mb-3">
-            <div className="grid grid-cols-2 gap-2">
-              {[
-                { id: 'normal', label: 'Normal', sub: 'Each pick scores on its own' },
-                { id: 'power', label: 'Power Play', sub: 'All must hit · big multiplier' },
-              ].map((m) => (
-                <button
-                  key={m.id}
-                  onClick={() => onSetMode(m.id)}
-                  className={`rounded-xl border p-2.5 text-left transition ${
-                    mode === m.id ? 'border-more bg-more/15' : 'border-line bg-panel2'
-                  }`}
-                >
-                  <div className={`text-sm font-extrabold ${mode === m.id ? 'text-more' : 'text-fg'}`}>{m.label}</div>
-                  <div className="mt-0.5 text-[10px] font-semibold leading-tight text-mist">{m.sub}</div>
-                </button>
-              ))}
+            <div className="mb-1.5 px-0.5 text-[11px] font-bold uppercase tracking-[0.12em] text-mist">
+              Choose your scoring mode
             </div>
-            <div className={`mt-2 rounded-xl px-3 py-2 text-[11px] font-semibold leading-snug ${
+            <div className="grid grid-cols-2 gap-2.5">
+              {[
+                { id: 'normal', label: 'Normal', sub: 'Each pick scores on its own', sel: 'border-more bg-more/20 text-more', rest: 'border-line bg-panel2' },
+                { id: 'power', label: '⚡ Power Play', sub: `All must hit · ${powerMultiplier(picks.length)}× points`, sel: 'border-gold bg-gold/25 text-gold', rest: 'border-gold/45 bg-gold/10' },
+              ].map((m) => {
+                const on = mode === m.id;
+                return (
+                  <button
+                    key={m.id}
+                    onClick={() => onSetMode(m.id)}
+                    className={`rounded-2xl border-2 p-3.5 text-left transition active:scale-[0.98] ${on ? m.sel : m.rest}`}
+                  >
+                    <div className={`text-[17px] font-extrabold leading-none ${on ? '' : 'text-fg'}`}>{m.label}</div>
+                    <div className={`mt-1.5 text-[11px] font-semibold leading-tight ${on ? 'opacity-80' : 'text-mist'}`}>{m.sub}</div>
+                  </button>
+                );
+              })}
+            </div>
+            <div className={`mt-2.5 rounded-xl px-3.5 py-2.5 text-xs font-semibold leading-snug ${
               isPower ? 'border border-gold/40 bg-gold/10 text-gold' : 'border border-line bg-panel2 text-mist'
             }`}>
               {isPower ? (
                 <>All <span className="font-extrabold">{picks.length}</span> picks must land → <span className="font-extrabold">{powerMultiplier(picks.length)}×</span> the points. One miss scores 0. (Players who don’t play are dropped.)</>
               ) : (
-                <>Each pick scores on its own. Tap <span className="font-extrabold text-gold">★ 2× Captain</span> on a pick below to double it if it lands.</>
+                <>Each pick scores on its own. Tap <span className="font-extrabold text-gold">★ 2× Captain</span> on any pick below to double it if it lands.</>
               )}
             </div>
           </div>
@@ -172,11 +176,14 @@ export default function PickSlip({
                         <button
                           onClick={() => onSetCaptain(p.id)}
                           aria-label="Make captain"
-                          className={`mt-1.5 inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide transition ${
-                            captainId === p.id ? 'bg-gold text-ink' : 'border border-gold/50 text-gold hover:bg-gold/10'
+                          className={`mt-2 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-extrabold uppercase tracking-wide transition active:scale-[0.97] ${
+                            captainId === p.id
+                              ? 'bg-gold text-ink shadow-[0_4px_14px_-4px_rgba(255,200,61,0.65)]'
+                              : 'border border-gold/60 bg-gold/10 text-gold hover:bg-gold/20'
                           }`}
                         >
-                          {captainId === p.id ? '★ Captain · 2×' : '☆ Make captain · 2×'}
+                          <span className="text-sm leading-none">{captainId === p.id ? '★' : '☆'}</span>
+                          {captainId === p.id ? 'Captain · 2×' : 'Make captain · 2×'}
                         </button>
                       )}
                     </div>
