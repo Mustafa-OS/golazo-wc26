@@ -92,7 +92,7 @@ export default function PropCard({ player, props, pickFor, onPick, locked, atCap
         <SideButton side="MORE" pts={morePts} active={picked?.side === 'MORE'} disabled={sideDisabled} onClick={() => onPick(active, 'MORE')} />
         <SideButton side="LESS" pts={lessPts} active={picked?.side === 'LESS'} disabled={sideDisabled} onClick={() => onPick(active, 'LESS')} />
       </div>
-      <div className="mt-1.5 text-center text-[10px] text-mist">model: {moreChance}% chance of MORE</div>
+      <div className="mt-1.5 text-center text-[10px] text-mist">{moreChance}% chance of MORE · win the points shown if you’re right</div>
     </div>
   );
 }
