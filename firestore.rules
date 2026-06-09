@@ -12,18 +12,17 @@ service cloud.firestore {
       }
     }
 
-    // A user can read/write only their own profile; points/streak are server-set.
+    // A user can read/write only their own profile; points are server-set.
     match /users/{uid} {
       allow read: if request.auth != null;
-      // On create, points/streak MUST start at 0 — stops a new account from
+      // On create, points MUST start at 0 — stops a new account from
       // self-assigning a score (which would game the all-time board).
       allow create: if request.auth.uid == uid
-                    && request.resource.data.points == 0
-                    && request.resource.data.streak == 0;
-      // block client tampering with points/streak — only functions touch those.
+                    && request.resource.data.points == 0;
+      // block client tampering with points — only functions touch that.
       allow update: if request.auth.uid == uid
                     && !request.resource.data.diff(resource.data).affectedKeys()
-                          .hasAny(['points', 'streak']);
+                          .hasAny(['points']);
     }
 
     // A slip belongs to its owner. Only the owner can read it (so nobody can

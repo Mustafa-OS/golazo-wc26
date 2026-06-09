@@ -1,13 +1,11 @@
 // ============================================================================
 // MOCK AUTH + STORE  (MOCK_MODE only)
 // ----------------------------------------------------------------------------
-// A tiny localStorage-backed stand-in for Firebase Auth + the users collection,
-// so the FULL first-run experience (sign up -> onboard -> play) works with no
-// backend. Mirrors the surface the live AuthContext uses, so the UI is identical
-// whether we're on mock data or real Firebase.
-//
-// Passwords are stored in plaintext in localStorage — this is a throwaway demo
-// backend, never used once VITE_FB_API_KEY (or the emulator) is present.
+// A tiny localStorage stand-in for Firebase Auth + the users collection so the
+// FULL first-run experience (Continue with Google -> onboard -> play) works with
+// no backend. Mirrors the surface the live AuthContext uses.
+//   - signInGoogle(): a fresh account that needs onboarding (name + shortcode)
+//   - signInDemo():   a pre-baked, already-onboarded persona ("You")
 // ============================================================================
 
 const LS_USERS = 'over.mock.users';
@@ -18,23 +16,22 @@ const read = (k, d) => {
 };
 const write = (k, v) => localStorage.setItem(k, JSON.stringify(v));
 
-// A pre-baked persona behind the one-tap "Try the demo" button, so the demo
-// lands in a lived-in account instead of an empty one.
+// A pre-baked persona behind the one-tap "Try the demo" button.
 const DEMO_UID = 'me';
 const DEMO_USER = {
   uid: DEMO_UID,
   email: 'demo@imperial.ac.uk',
   name: 'You',
-  dept: 'Design Eng',
+  shortcode: 'YOU24',
+  year: 2024,
   points: 309,
-  streak: 3,
   onboarded: true,
 };
 
 function allUsers() {
   const users = read(LS_USERS, null);
   if (users) return users;
-  const seed = { [DEMO_USER.email]: { ...DEMO_USER, password: 'demo' } };
+  const seed = { [DEMO_USER.email]: { ...DEMO_USER } };
   write(LS_USERS, seed);
   return seed;
 }
@@ -46,30 +43,22 @@ export function currentUser() {
   if (!uid) return null;
   const users = allUsers();
   const rec = Object.values(users).find((u) => u.uid === uid);
-  if (!rec) return null;
-  const { password, ...safe } = rec;
-  return safe;
+  return rec ? { ...rec } : null;
 }
 
-export function signUp(email, password) {
+// Mock "Sign in with Google": a fresh personal-Google account that still needs
+// to onboard (no name/shortcode yet) — so the onboarding step is exercised.
+export function signInGoogle() {
   const users = allUsers();
-  const key = email.toLowerCase();
-  if (users[key]) throw new Error('auth/email-already-in-use');
-  const user = { uid: rid(), email: key, password, onboarded: false, points: 0, streak: 0 };
-  users[key] = user;
-  write(LS_USERS, users);
-  write(LS_SESSION, user.uid);
-  const { password: _, ...safe } = user;
-  return safe;
-}
-
-export function signIn(email, password) {
-  const users = allUsers();
-  const rec = users[email.toLowerCase()];
-  if (!rec || rec.password !== password) throw new Error('auth/invalid-credential');
+  const email = 'student@gmail.com';
+  let rec = users[email];
+  if (!rec) {
+    rec = { uid: rid(), email, onboarded: false, points: 0 };
+    users[email] = rec;
+    write(LS_USERS, users);
+  }
   write(LS_SESSION, rec.uid);
-  const { password: _, ...safe } = rec;
-  return safe;
+  return { ...rec };
 }
 
 export function signInDemo() {
@@ -88,6 +77,5 @@ export function updateProfile(uid, patch) {
   if (!key) throw new Error('auth/user-not-found');
   users[key] = { ...users[key], ...patch };
   write(LS_USERS, users);
-  const { password: _, ...safe } = users[key];
-  return safe;
+  return { ...users[key] };
 }

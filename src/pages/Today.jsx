@@ -45,9 +45,10 @@ export default function Today({ matches, pickFor, onPick, max, count, locked, ui
   const selectedDay = dayKey ? matchdays.find((d) => d.key === dayKey) : null;
   const selectedMatch = matchId ? matches.find((m) => m.id === matchId) : null;
 
-  // Tell the app which match day's slip is in context (open days only).
+  // Tell the app which open match day is being viewed (null when not viewing one),
+  // so "My Picks" tracks it while you're here and snaps back to nearest on leave.
   useEffect(() => {
-    if (selectedDay && selectedDay.status === 'open') onOpenMatchday?.(selectedDay.key);
+    onOpenMatchday?.(selectedDay?.status === 'open' ? selectedDay.key : null);
   }, [selectedDay, onOpenMatchday]);
 
   // Level 3 — props for a chosen game in an OPEN match day.

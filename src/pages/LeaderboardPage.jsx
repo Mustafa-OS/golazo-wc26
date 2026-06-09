@@ -156,15 +156,10 @@ function Row({ rank, u, meUid }) {
         <span className="w-5 text-center font-display text-lg text-mist">{rank}</span>
         <div>
           <div className="text-sm font-bold">{u.name}</div>
-          <div className="text-[11px] font-semibold text-mist">{u.dept}</div>
+          {u.year && <div className="text-[11px] font-semibold text-mist">Class of ’{String(u.year).slice(2)}</div>}
         </div>
       </div>
       <div className="flex items-center gap-3">
-        {u.streak > 0 && (
-          <span className="rounded-full bg-flame/15 px-2 py-0.5 text-[11px] font-bold text-flame">
-            {u.streak}-day
-          </span>
-        )}
         <span className="font-display text-xl text-gold">{u.points}</span>
       </div>
     </div>

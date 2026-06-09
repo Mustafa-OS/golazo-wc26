@@ -137,18 +137,14 @@ async function resolveMatches(key, date, season) {
     for (const mid of slip.matchIds) Object.assign(statsByPlayer, statsByMatch[mid] || {});
 
     const userRef = db.doc(`users/${slip.uid}`);
-    const priorStreak = (await userRef.get()).get('streak') || 0;
-    const { results, total, correctCount } = settleSlip(
-      slip.picks, statsByPlayer, priorStreak,
+    const { results, total } = settleSlip(
+      slip.picks, statsByPlayer, 0,
       { mode: slip.mode, captainId: slip.captainId }
     );
 
     const writes = db.batch();
     writes.update(slipDoc.ref, { picks: results, settled: true, scored: total, settledAt: Date.now() });
-    writes.set(userRef, {
-      points: FieldValue.increment(total),
-      streak: correctCount > 0 ? priorStreak + 1 : 0,
-    }, { merge: true });
+    writes.set(userRef, { points: FieldValue.increment(total) }, { merge: true });
     await writes.commit();
     settledCount++;
     console.log(`Settled slip ${slipDoc.id}: ${total} pts (${slip.mode || 'normal'})`);
@@ -166,14 +162,14 @@ async function recompute() {
   // All-time board from cumulative user points.
   const users = await db.collection('users').orderBy('points', 'desc').limit(500).get();
   const allTime = users.docs.map((d, i) => ({
-    rank: i + 1, uid: d.id, name: d.get('name'), dept: d.get('dept'), points: d.get('points') || 0,
+    rank: i + 1, uid: d.id, name: d.get('name'), year: d.get('year'), points: d.get('points') || 0,
   }));
   await db.doc('leaderboards/imperial').set({ board: allTime, updatedAt: Date.now() });
 
   // Weekly board: sum settled slip scores since Monday, grouped by user.
   const weekStart = startOfWeekISO();
   const meta = {};
-  users.docs.forEach((d) => { meta[d.id] = { name: d.get('name'), dept: d.get('dept') }; });
+  users.docs.forEach((d) => { meta[d.id] = { name: d.get('name'), year: d.get('year') }; });
   const slips = await db.collection('slips').where('day', '>=', weekStart).get();
   const byUid = {};
   slips.docs.forEach((d) => {
@@ -181,7 +177,7 @@ async function recompute() {
     if (s.settled) byUid[s.uid] = (byUid[s.uid] || 0) + (s.scored || 0);
   });
   const weekly = Object.entries(byUid)
-    .map(([uid, points]) => ({ uid, points, name: meta[uid]?.name, dept: meta[uid]?.dept }))
+    .map(([uid, points]) => ({ uid, points, name: meta[uid]?.name, year: meta[uid]?.year }))
     .filter((r) => r.name) // known users only
     .sort((a, b) => b.points - a.points)
     .slice(0, 500)

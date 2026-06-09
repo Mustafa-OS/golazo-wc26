@@ -14,8 +14,6 @@
 
 const MIN_POINTS = 5;     // floor for a near-certain pick
 const MAX_POINTS = 100;   // cap so one lucky longshot can't run away with it
-const STREAK_STEP = 0.05; // +5% per consecutive correct day
-const STREAK_CAP = 0.5;   // max +50% from streaks
 // Props are generated for the full squad, so a picked player might not play.
 // Below this many minutes the pick is VOID (no points, no penalty, no streak
 // effect) — the standard DFS "Did Not Play" rule. Raise toward 20–60 to also
@@ -80,16 +78,6 @@ export function resolvePick(pick, actual) {
   return { correct, awarded: correct ? pick.value : 0 };
 }
 
-/**
- * Apply a daily streak multiplier to a day's base points.
- * @param {number} basePoints  sum of awarded points that day
- * @param {number} streakDays  consecutive prior days with >=1 correct pick
- */
-export function applyStreak(basePoints, streakDays) {
-  const mult = 1 + Math.min(streakDays * STREAK_STEP, STREAK_CAP);
-  return Math.round(basePoints * mult);
-}
-
 // --- Slip modes ------------------------------------------------------------
 // NORMAL: picks score independently; one pick may be CAPTAIN -> 2x if correct.
 // POWER (parlay): all-or-nothing — if every live pick lands, the summed value is
@@ -150,13 +138,11 @@ export function settleSlip(picks, statsByPlayer, streakDays = 0, opts = {}) {
     basePoints = results.reduce((s, r) => s + r.awarded, 0);
   }
 
-  const newStreak = correctCount > 0 ? streakDays + 1 : 0;
   return {
     results,
     basePoints,
-    total: applyStreak(basePoints, streakDays),
+    total: basePoints,
     correctCount,
-    newStreak,
     mode,
     powerMult: mode === 'power' ? powerMultiplier(live.length) : 1,
   };

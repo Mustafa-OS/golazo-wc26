@@ -45,8 +45,6 @@ export default function Profile({ rows, onHowTo }) {
   const stats = [
     { label: 'Total Points', value: user.points || 0, accent: 'text-gold', ring: 'ring-gold/40' },
     { label: 'Imperial Rank', value: rank ? `#${rank}` : '—', accent: 'text-azure', ring: 'ring-azure/40' },
-    { label: 'Day Streak', value: user.streak || 0, accent: 'text-flame', ring: 'ring-flame/40' },
-    { label: 'Hit Rate', value: user.hitRate ? `${user.hitRate}%` : '—', accent: 'text-grape', ring: 'ring-grape/40' },
   ];
 
   return (
@@ -57,7 +55,9 @@ export default function Profile({ rows, onHowTo }) {
         </div>
         <div className="min-w-0">
           <div className="truncate font-display text-2xl">{user.name}</div>
-          <div className="text-sm font-semibold text-mist">{user.dept} · Imperial</div>
+          <div className="text-sm font-semibold text-mist">
+            {user.year ? `Imperial · Class of ’${String(user.year).slice(2)}` : 'Imperial'}
+          </div>
         </div>
       </div>
 
@@ -91,7 +91,7 @@ export default function Profile({ rows, onHowTo }) {
         <ul className="mt-2 space-y-1.5 text-sm text-mist">
           <li>• Rarer calls pay more — a striker brace beats a safe shot-on-target.</li>
           <li>• Wrong picks score 0. Never negative.</li>
-          <li>• Keep a daily streak for up to +50% bonus points.</li>
+          <li>• Captain a pick for 2×, or go Power Play for an all-or-nothing multiplier.</li>
         </ul>
       </div>
 

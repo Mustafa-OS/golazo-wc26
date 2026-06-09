@@ -85,29 +85,35 @@ export default function PickSlip({
           </div>
         </div>
 
-        {/* mode toggle (editable only) */}
+        {/* mode selector (editable only) */}
         {editable && picks.length > 0 && (
           <div className="mb-3">
-            <div className="grid grid-cols-2 gap-1 rounded-xl bg-panel2 p-1">
-              {[{ id: 'normal', label: 'Normal' }, { id: 'power', label: 'Power Play' }].map((m) => (
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { id: 'normal', label: 'Normal', sub: 'Each pick scores on its own' },
+                { id: 'power', label: 'Power Play', sub: 'All must hit · big multiplier' },
+              ].map((m) => (
                 <button
                   key={m.id}
                   onClick={() => onSetMode(m.id)}
-                  className={`rounded-lg py-2 text-sm font-bold transition ${
-                    mode === m.id ? 'bg-more text-ink' : 'text-mist'
+                  className={`rounded-xl border p-2.5 text-left transition ${
+                    mode === m.id ? 'border-more bg-more/15' : 'border-line bg-panel2'
                   }`}
                 >
-                  {m.label}
+                  <div className={`text-sm font-extrabold ${mode === m.id ? 'text-more' : 'text-white'}`}>{m.label}</div>
+                  <div className="mt-0.5 text-[10px] font-semibold leading-tight text-mist">{m.sub}</div>
                 </button>
               ))}
             </div>
-            <p className="mt-2 px-1 text-[11px] font-semibold text-mist">
+            <div className={`mt-2 rounded-xl px-3 py-2 text-[11px] font-semibold leading-snug ${
+              isPower ? 'border border-gold/40 bg-gold/10 text-gold' : 'border border-line bg-panel2 text-mist'
+            }`}>
               {isPower ? (
-                <>All {picks.length} must land for <span className="text-gold">{powerMultiplier(picks.length)}×</span> — one miss pays 0. (DNP picks are ignored.)</>
+                <>All <span className="font-extrabold">{picks.length}</span> picks must land → <span className="font-extrabold">{powerMultiplier(picks.length)}×</span> the points. One miss scores 0. (Players who don’t play are dropped.)</>
               ) : (
-                <>Tap ☆ to make a pick your <span className="text-gold">Captain</span> — it pays 2× if it lands.</>
+                <>Each pick scores on its own. Tap <span className="font-extrabold text-gold">★ 2× Captain</span> on a pick below to double it if it lands.</>
               )}
-            </p>
+            </div>
           </div>
         )}
 
@@ -149,16 +155,6 @@ export default function PickSlip({
                         {p.void ? '—' : p.correct ? '✓' : '✗'}
                       </span>
                     )}
-                    {/* captain star (editable, normal mode) */}
-                    {editable && !isPower && (
-                      <button
-                        onClick={() => onSetCaptain(p.id)}
-                        aria-label="Make captain"
-                        className={`text-lg leading-none transition ${captainId === p.id ? 'text-gold' : 'text-mist hover:text-gold'}`}
-                      >
-                        {captainId === p.id ? '★' : '☆'}
-                      </button>
-                    )}
                     <div>
                       <div className="flex items-center gap-1.5 text-sm font-bold">
                         {p.playerName}
@@ -172,6 +168,17 @@ export default function PickSlip({
                         </span>{' '}
                         · {p.label} {p.line}
                       </div>
+                      {editable && !isPower && (
+                        <button
+                          onClick={() => onSetCaptain(p.id)}
+                          aria-label="Make captain"
+                          className={`mt-1.5 inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide transition ${
+                            captainId === p.id ? 'bg-gold text-ink' : 'border border-gold/50 text-gold hover:bg-gold/10'
+                          }`}
+                        >
+                          {captainId === p.id ? '★ Captain · 2×' : '☆ Make captain · 2×'}
+                        </button>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-3">

@@ -1,23 +1,14 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 
-// Imperial departments for the picker (optional; free text still allowed).
-const DEPARTMENTS = [
-  'Aeronautics', 'Bioengineering', 'Chemical Engineering',
-  'Civil and Environmental Engineering', 'Computing', 'Design Engineering',
-  'Earth Science and Engineering', 'Electrical and Electronic Engineering',
-  'Materials', 'Mechanical Engineering', 'Medicine', 'Business School',
-  'Maths', 'Physics', 'Chemistry', 'Life Sciences',
-];
-
 export default function Onboarding() {
   const { user, completeOnboarding, error, busy, signOut } = useAuth();
-  const [name, setName] = useState(user?.displayName || ''); // pre-filled from Microsoft
-  const [dept, setDept] = useState('');
+  const [name, setName] = useState(user?.displayName || ''); // pre-filled from Google
+  const [shortcode, setShortcode] = useState('');
 
   async function submit(e) {
     e.preventDefault();
-    await completeOnboarding({ name, dept });
+    await completeOnboarding({ name, shortcode });
   }
 
   return (
@@ -25,7 +16,7 @@ export default function Onboarding() {
       <div className="text-center">
         <div className="font-display text-4xl tracking-wide">ALMOST IN<span className="text-more">.</span></div>
         <p className="mt-2 text-sm font-semibold text-mist">
-          Set up how you’ll show on the leaderboard.
+          Set your name and confirm you’re at Imperial.
         </p>
         {user?.email && (
           <p className="mt-1 text-[11px] font-semibold text-mist">{user.email}</p>
@@ -48,18 +39,21 @@ export default function Onboarding() {
 
         <div>
           <label className="mb-1.5 block px-1 text-xs font-bold uppercase tracking-wide text-mist">
-            Department <span className="text-mist/70">· optional</span>
+            Imperial shortcode
           </label>
-          <select
-            value={dept}
-            onChange={(e) => setDept(e.target.value)}
-            className={`w-full appearance-none rounded-xl border border-line bg-panel2 px-3.5 py-3 text-sm font-semibold outline-none focus:border-more ${
-              dept ? 'text-white' : 'text-mist'
-            }`}
-          >
-            <option value="">Select your department (or skip)</option>
-            {DEPARTMENTS.map((d) => <option key={d} value={d} className="text-white">{d}</option>)}
-          </select>
+          <input
+            value={shortcode}
+            onChange={(e) => setShortcode(e.target.value.toUpperCase())}
+            placeholder="e.g. AG3824"
+            autoCapitalize="characters"
+            autoCorrect="off"
+            spellCheck={false}
+            maxLength={12}
+            className="w-full rounded-xl border border-line bg-panel2 px-3.5 py-3 text-sm font-bold uppercase tracking-wide outline-none placeholder:font-semibold placeholder:normal-case placeholder:tracking-normal placeholder:text-mist focus:border-more"
+          />
+          <p className="mt-1.5 px-1 text-[11px] font-semibold text-mist">
+            Your Imperial login code (letters then numbers) — the last two digits are your join year.
+          </p>
         </div>
 
         {error && (

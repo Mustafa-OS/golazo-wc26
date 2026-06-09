@@ -62,10 +62,9 @@ export default function Home({ matches = [], rows = [], count = 0, max = 5, onGo
       </div>
 
       {/* stat strip */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 gap-3">
         <Stat label="Points" value={user.points || 0} accent="text-gold" ring="ring-gold/40" />
-        <Stat label="Imperial" value={rank ? `#${rank}` : '—'} accent="text-azure" ring="ring-azure/40" />
-        <Stat label="Streak" value={user.streak || 0} accent="text-flame" ring="ring-flame/40" />
+        <Stat label="Imperial Rank" value={rank ? `#${rank}` : '—'} accent="text-azure" ring="ring-azure/40" />
       </div>
 
       {/* primary CTA */}

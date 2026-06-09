@@ -2,7 +2,7 @@
 // imported by BOTH the frontend and the Cloud Functions. Pure JS, no backend.
 //   run:  npm test
 import { buildLine, buildPlayerProps, buildMatchProps, METRICS } from '../src/lib/lineEngine.js';
-import { sideProbability, pickValue, resolvePick, applyStreak, settleSlip, slipPotential, powerMultiplier, CAPTAIN_MULT } from '../src/lib/scoringEngine.js';
+import { sideProbability, pickValue, resolvePick, settleSlip, slipPotential, powerMultiplier, CAPTAIN_MULT } from '../src/lib/scoringEngine.js';
 
 let passed = 0;
 const eq = (label, got, want) => {
@@ -82,19 +82,12 @@ try {
   ok('voided pick is not counted correct', resolvePick(pick, { minutes: 0, goals: 5 }).correct === false);
   ok('played pick is not voided', !resolvePick(pick, played({ goals: 1 })).void);
 
-  // --- streak multiplier ---------------------------------------------------
-  eq('no streak = no bonus', applyStreak(100, 0), 100);
-  eq('5-day streak = +25%', applyStreak(100, 5), 125);
-  eq('streak bonus caps at +50%', applyStreak(100, 99), 150);
-
   // --- settleSlip ----------------------------------------------------------
   const lessPick = { ...buildLine(striker, 'shotsOn'), id: 'p2', playerId: 's1', matchId: 'm1', side: 'LESS', value: 5 };
   const settled = settleSlip([pick, lessPick], { s1: played({ goals: 1, shotsOn: 0 }) }, 0);
   eq('settleSlip counts correct picks', settled.correctCount, 2);
   ok('settleSlip totals base points', settled.basePoints === more + 5);
-  eq('settleSlip advances the streak on a hit', settled.newStreak, 1);
-  const blank = settleSlip([pick], { s1: played({ goals: 0 }) }, 3);
-  eq('settleSlip resets streak when nothing lands', blank.newStreak, 0);
+  ok('settleSlip total has no streak multiplier', settled.total === settled.basePoints);
 
   // A DNP pick in a slip is voided, not scored or counted.
   const voided = settleSlip([pick], { s1: { goals: 2 } }, 0); // no minutes -> void

@@ -96,16 +96,18 @@ function MainApp() {
   // The groups this user belongs to (for the Groups tab + group boards).
   useEffect(() => subscribeMyGroups(user.uid, setGroups), [user.uid]);
 
-  // Slips are per MATCH DAY. Default the active slip to the nearest open day,
-  // and switch it when the user opens another open match day in the Today tab.
+  // Slips are per MATCH DAY. "My Picks" defaults to the NEAREST upcoming open
+  // match day; it only switches to another while you're actively viewing that
+  // match day in the Matches tab, then snaps back to nearest when you leave.
   const openMatchdays = useMemo(
     () => buildMatchdays(matches).filter((d) => d.status === 'open'),
     [matches]
   );
-  const [activeMdKey, setActiveMdKey] = useState(null);
-  useEffect(() => {
-    if (!activeMdKey && openMatchdays[0]) setActiveMdKey(openMatchdays[0].key);
-  }, [openMatchdays, activeMdKey]);
+  const nearestOpenKey = openMatchdays[0]?.key ?? null;
+  const [viewingKey, setViewingKey] = useState(null);
+  const activeMdKey = viewingKey || nearestOpenKey;
+  // Stop "viewing" a specific match day once you leave the Matches tab.
+  useEffect(() => { if (tab !== 'today') setViewingKey(null); }, [tab]);
 
   // Restore that match day's saved slip (picks reset when the day changes).
   useEffect(() => {
@@ -172,9 +174,8 @@ function MainApp() {
     const meRow = {
       uid: user.uid,
       name: user.name,
-      dept: user.dept,
+      year: user.year,
       points: user.points || 0,
-      streak: user.streak || 0,
     };
     return [...others, meRow];
   }, [leaderboard, user]);
@@ -274,7 +275,7 @@ function MainApp() {
               count={picks.length}
               locked={effectiveLocked}
               uid={user.uid}
-              onOpenMatchday={setActiveMdKey}
+              onOpenMatchday={setViewingKey}
             />
           ))}
         {tab === 'board' && <LeaderboardPage rows={rows} weekly={weekly} meUid={user.uid} groups={groups} />}
@@ -312,6 +313,19 @@ function MainApp() {
         </div>
       )}
 
+      {/* Unmissable save prompt — this is how picks get saved. */}
+      {picks.length > 0 && !effectiveLocked && !slipOpen && (
+        <div className="pointer-events-none fixed inset-x-0 bottom-[70px] z-30 mx-auto max-w-md px-4">
+          <button
+            onClick={() => setSlipOpen(true)}
+            className="animate-popin pointer-events-auto flex w-full items-center justify-between rounded-2xl bg-more px-5 py-3.5 font-display text-lg tracking-wide text-ink shadow-lg transition active:scale-[0.98]"
+          >
+            <span>REVIEW &amp; SAVE PICKS</span>
+            <span className="rounded-full bg-ink/20 px-3 py-0.5 text-sm font-extrabold">{picks.length}/{MAX_PICKS}</span>
+          </button>
+        </div>
+      )}
+
       <BottomNav tab={tab} setTab={setTab} />
     </div>
   );
@@ -338,10 +352,14 @@ function Header({ picks, max, onOpenSlip, onHelp, onHome }) {
         </button>
         <button
           onClick={onOpenSlip}
-          className="flex items-center gap-2 rounded-full border border-line bg-panel2 px-4 py-2 text-sm font-bold transition active:scale-95"
+          className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-extrabold transition active:scale-95 ${
+            picks.length > 0 ? 'bg-more text-ink shadow-glow' : 'border border-line bg-panel2 text-white'
+          }`}
         >
           <span>My Picks</span>
-          <span className="rounded-full bg-more px-2 py-0.5 text-xs font-extrabold text-ink">
+          <span className={`rounded-full px-2 py-0.5 text-xs font-extrabold ${
+            picks.length > 0 ? 'bg-ink/20 text-ink' : 'bg-more text-ink'
+          }`}>
             {picks.length}/{max}
           </span>
         </button>

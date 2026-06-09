@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { sideProbability, pickValue } from '../lib/scoringEngine.js';
 import Flag from './Flag.jsx';
 import { IconStar } from './Icons.jsx';
@@ -14,12 +14,18 @@ const ml = (m) => METRIC_LABEL[m] || m;
 
 // One card per PLAYER; metric chips switch the line/points; tap MORE or LESS.
 export default function PropCard({ player, props, pickFor, onPick, locked, atCap, popular }) {
-  const [metric, setMetric] = useState(props[0]?.metric);
+  // Goals first — default + leftmost — for every player that has a goals line.
+  const ordered = useMemo(() => {
+    const g = props.filter((p) => p.metric === 'goals');
+    const rest = props.filter((p) => p.metric !== 'goals');
+    return [...g, ...rest];
+  }, [props]);
+  const [metric, setMetric] = useState(ordered[0]?.metric);
   useEffect(() => {
-    if (!props.some((p) => p.metric === metric)) setMetric(props[0]?.metric);
-  }, [props, metric]);
+    if (!ordered.some((p) => p.metric === metric)) setMetric(ordered[0]?.metric);
+  }, [ordered, metric]);
 
-  const active = props.find((p) => p.metric === metric) || props[0];
+  const active = ordered.find((p) => p.metric === metric) || ordered[0];
   if (!active) return null;
 
   const morePts = pickValue(active, 'MORE');
@@ -58,9 +64,9 @@ export default function PropCard({ player, props, pickFor, onPick, locked, atCap
       </div>
 
       {/* metric selector */}
-      {props.length > 1 && (
+      {ordered.length > 1 && (
         <div className="no-scrollbar -mx-1 mt-3 flex gap-1.5 overflow-x-auto px-1">
-          {props.map((p) => {
+          {ordered.map((p) => {
             const sel = p.metric === metric;
             const inSlip = !!pickFor(p.id);
             return (
