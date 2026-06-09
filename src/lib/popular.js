@@ -21,11 +21,11 @@ const STAR_KEYS = [
   'rodrygo', 'raphinha', 'kane', 'foden', 'saka', 'rice', 'rodri', 'pedri',
   'gavi', 'yamal', 'musiala', 'wirtz', 'kimmich', 'griezmann', 'dembele',
   'modric', 'kovacic', 'kramaric', 'perisic', 'gvardiol', 'kvaratskhelia',
-  'osimhen', 'salah', 'lewandowski', 'zielinski', 'mahrez', 'lukaku', 'courtois',
+  'osimhen', 'm salah', 'mohamed salah', 'lewandowski', 'zielinski', 'mahrez', 'lukaku', 'courtois',
   'doku', 'casemiro', 'marquinhos', 'militao', 'alisson', 'ederson', 'antony',
   'richarlison', 'endrick', 'neuer', 'rudiger', 'gundogan', 'sane', 'havertz',
   'fullkrug', 'maignan', 'kounde', 'saliba', 'tchouameni', 'camavinga',
-  'thuram', 'carvajal', 'cucurella', 'morata', 'olmo', 'fernandez', 'pulisic',
+  'thuram', 'carvajal', 'cucurella', 'morata', 'olmo', 'pulisic',
   'mckennie', 'balogun', 'hojlund', 'isak', 'gyokeres', 'vlahovic', 'chiesa',
   'barella', 'donnarumma', 'tonali', 'kulusevski', 'odegaard', 'martinelli',
   'nunez', 'alvarez', 'otamendi', 'tagliafico', 'valverde', 'araujo', 'almada',
@@ -44,6 +44,61 @@ const STAR_KEYS = [
   'heung min son', 'son heung min', 'van dijk', 'ter stegen', 'de jong',
   'bernardo silva', 'b silva', 'ruben dias', 'joao felix', 'nuno mendes',
   'alphonso davies',
+  // — wider WC 2026 field (added after seeing the real squads) —
+  // Mexico / hosts
+  'jimenez', 'gimenez', 'ochoa', 'montes', 'pineda', 'lozano',
+  // Brazil
+  'cunha', 'paqueta', 'gabriel jesus',
+  // Morocco
+  'bounou', 'el kaabi', 'brahim diaz', 'ezzalzouli', 'en nesyri', 'mazraoui',
+  // Netherlands
+  'ake', 'malen', 'weghorst', 'gravenberch', 'reijnders', 'timber', 'frimpong',
+  // Japan
+  'kubo', 'kamada', 'doan', 'tomiyasu', 'mitoma', 'endo', 'ueda', 'maeda',
+  'ito', 'tanaka', 'minamino',
+  // USA
+  'dest', 'pepi', 'aaronson', 't adams', 'richards', 'musah', 'a robinson',
+  // Paraguay
+  'almiron', 'enciso', 'sanabria',
+  // South Korea
+  'kim min jae', 'lee kang in', 'hwang hee chan', 'hwang in beom',
+  // Czechia
+  'soucek', 'coufal',
+  // Germany
+  'goretzka', 'undav', 'tah', 'woltemade',
+  // France
+  'upamecano', 'barcola', 'kolo muani', 'rabiot',
+  // England
+  'rashford', 'mainoo', 'guehi', 'alexander arnold', 'anthony gordon',
+  // Spain
+  'merino', 'oyarzabal', 'ferran torres', 'fabian ruiz', 'laporte', 'zubimendi',
+  // Belgium
+  'tielemans', 'trossard', 'openda', 'de ketelaere',
+  // Portugal
+  'goncalo ramos',
+  // Uruguay
+  'ugarte', 'bentancur', 'arrascaeta', 'pellistri',
+  // Colombia
+  'luis diaz', 'james rodriguez', 'sinisterra', 'cuadrado',
+  // Nigeria
+  'chukwueze', 'boniface', 'onana',
+  // Senegal
+  'sadio mane', 's mane', 'nicolas jackson', 'ismaila sarr', 'idrissa gueye',
+  // Ghana
+  'ayew', 'semenyo',
+  // Ecuador
+  'caicedo', 'hincapie', 'estupinan', 'enner valencia',
+  // Switzerland
+  'freuler', 'ndoye',
+  // Türkiye
+  'calhanoglu', 'arda guler', 'yildiz', 'kokcu', 'demiral',
+  // Scotland
+  'mctominay', 'mcginn', 'gilmour', 'andy robertson', 'tierney',
+  // Canada
+  'jonathan david', 'larin', 'buchanan',
+  // Croatia / others
+  'sucic', 'szczesny', 'marmoush', 'trezeguet', 'afif', 'almoez',
+  'eriksen', 'hojbjerg', 'milinkovic', 'tadic', 'mitrovic',
 ];
 
 /** lowercase, strip accents, collapse non-alphanumerics to single spaces. */
