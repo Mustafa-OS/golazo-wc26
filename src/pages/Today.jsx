@@ -5,7 +5,7 @@ import { teamShort } from '../lib/team.js';
 import { buildMatchdays } from '../lib/matchday.js';
 import { subscribeSlip } from '../lib/slipStore.js';
 import { popularIdSet } from '../lib/popular.js';
-import { IconLock, IconStar } from '../components/Icons.jsx';
+import { IconLock, IconStar, IconChevronLeft } from '../components/Icons.jsx';
 
 const ukTime = (iso) => new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 function relKickoff(iso) {
@@ -55,6 +55,7 @@ export default function Today({ matches, pickFor, onPick, max, count, locked, ui
   if (selectedMatch && selectedDay?.status === 'open') {
     return (
       <MatchProps key={selectedMatch.id} match={selectedMatch} onBack={() => setMatchId(null)}
+        games={selectedDay.games} onSwitchGame={setMatchId}
         pickFor={pickFor} onPick={onPick} max={max} count={count} locked={locked} />
     );
   }
@@ -256,9 +257,11 @@ function TeamRow({ team, right }) {
 
 function BackHeader({ onBack, title, sub }) {
   return (
-    <div className="mt-2 flex items-center gap-3">
+    <div className="mt-2">
       <button onClick={onBack} aria-label="Back"
-        className="flex h-9 w-9 items-center justify-center rounded-full border border-line bg-panel text-lg text-mist transition active:scale-95 hover:text-fg">‹</button>
+        className="mb-3 inline-flex items-center gap-1 rounded-full border border-line bg-panel2 py-1.5 pl-2 pr-3.5 text-sm font-bold text-fg transition active:scale-95 hover:border-more/60">
+        <IconChevronLeft size={16} /> Back
+      </button>
       <div className="leading-tight">
         <div className="font-display text-2xl">{title}</div>
         {sub && <div className="text-[11px] font-semibold text-mist">{sub}</div>}
@@ -290,7 +293,7 @@ function EmptyTab({ tab }) {
 }
 
 // --- Level 3: a match's player props ---------------------------------------
-function MatchProps({ match, onBack, pickFor, onPick, max, count, locked }) {
+function MatchProps({ match, onBack, games, onSwitchGame, pickFor, onPick, max, count, locked }) {
   const [teamFilter, setTeamFilter] = useState('');
   const atCap = count >= max;
 
@@ -341,6 +344,30 @@ function MatchProps({ match, onBack, pickFor, onPick, max, count, locked }) {
       <BackHeader onBack={onBack}
         title={`${teamShort(match.home.name, match.home.code)} v ${teamShort(match.away.name, match.away.code)}`}
         sub={match.stage} />
+
+      {games && games.length > 1 && (
+        <div className="mt-3">
+          <div className="mb-1.5 px-0.5 text-[10px] font-bold uppercase tracking-wide text-mist">
+            Games this match day — tap to switch
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {games.map((g) => {
+              const cur = g.id === match.id;
+              return (
+                <button
+                  key={g.id}
+                  onClick={() => onSwitchGame?.(g.id)}
+                  className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition ${
+                    cur ? 'bg-more text-ink' : 'border border-line bg-panel text-mist hover:border-more/60'
+                  }`}
+                >
+                  {teamShort(g.home.name, g.home.code)} v {teamShort(g.away.name, g.away.code)}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {locked ? (
         <div className="mt-2 flex items-center justify-between rounded-xl border border-gold/40 bg-gold/10 px-3 py-2">
