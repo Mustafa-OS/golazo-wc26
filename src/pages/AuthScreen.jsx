@@ -53,8 +53,13 @@ export default function AuthScreen() {
       </div>
 
       {/* live teaser of the core mechanic */}
-      <div className="mt-4">
-        <div className="mb-1.5 px-1 text-[11px] font-bold uppercase tracking-wide text-mist">Here’s the idea</div>
+      <div className="mt-5">
+        <div className="mb-2 px-1 text-center">
+          <div className="font-display text-2xl tracking-wide">HERE’S THE IDEA</div>
+          <div className="mt-0.5 text-[13px] font-semibold text-mist">
+            Every player has a line — call it <span className="text-more">MORE</span> or <span className="text-less">LESS</span>.
+          </div>
+        </div>
         <div className="rounded-2xl border border-line bg-panel p-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
