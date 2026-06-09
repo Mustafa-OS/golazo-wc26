@@ -31,7 +31,7 @@ export default function Onboarding() {
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Aryan K."
+            placeholder="Your display name"
             maxLength={24}
             className="w-full rounded-xl border border-line bg-panel2 px-3.5 py-3 text-sm font-semibold outline-none placeholder:text-mist focus:border-more"
           />
@@ -44,16 +44,13 @@ export default function Onboarding() {
           <input
             value={shortcode}
             onChange={(e) => setShortcode(e.target.value.toUpperCase())}
-            placeholder="e.g. AG3824"
+            placeholder="Imperial shortcode"
             autoCapitalize="characters"
             autoCorrect="off"
             spellCheck={false}
             maxLength={12}
             className="w-full rounded-xl border border-line bg-panel2 px-3.5 py-3 text-sm font-bold uppercase tracking-wide outline-none placeholder:font-semibold placeholder:normal-case placeholder:tracking-normal placeholder:text-mist focus:border-more"
           />
-          <p className="mt-1.5 px-1 text-[11px] font-semibold text-mist">
-            Your Imperial login code (letters then numbers) — the last two digits are your join year.
-          </p>
         </div>
 
         {error && (

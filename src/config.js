@@ -17,12 +17,11 @@ export const ALLOWED_EMAIL_DOMAINS = null;
 export function validateShortcode(raw) {
   const code = String(raw || '').trim().toUpperCase();
   if (!code) return { ok: false, error: 'Enter your Imperial shortcode.' };
-  if (!/^[A-Z]+[0-9]{2,}$/.test(code)) {
-    return { ok: false, error: 'Shortcode looks off — letters then numbers, e.g. AG3824.' };
-  }
+  // Generic error on purpose — don't reveal the format/rules, so someone without a
+  // real Imperial shortcode can't reverse-engineer one that passes.
+  const GENERIC = { ok: false, error: 'That doesn’t look like a valid Imperial shortcode.' };
+  if (!/^[A-Z]+[0-9]{2,}$/.test(code)) return GENERIC;
   const last2 = Number(code.slice(-2));
-  if (last2 < 20 || last2 > 25) {
-    return { ok: false, error: 'The last two digits should be your join year (20–25).' };
-  }
+  if (last2 < 20 || last2 > 25) return GENERIC;
   return { ok: true, code, year: 2000 + last2 };
 }
