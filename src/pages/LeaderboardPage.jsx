@@ -13,7 +13,7 @@ const PODIUM = {
   3: { border: 'border-flame', text: 'text-flame', bt: 'border-t-flame', from: 'from-flame/10' },
 };
 
-export default function LeaderboardPage({ rows, weekly = [], meUid, groups = [] }) {
+export default function LeaderboardPage({ rows, weekly = [], meUid, groups = [], onLeaveGroup }) {
   const [scope, setScope] = useState('imperial');
   const allTime = [...rows].sort((a, b) => b.points - a.points);
   const weekRows = [...weekly].sort((a, b) => b.points - a.points);
@@ -37,7 +37,7 @@ export default function LeaderboardPage({ rows, weekly = [], meUid, groups = [] 
       </div>
 
       {scope === 'group' ? (
-        <GroupBoards groups={groups} sorted={allTime} meUid={meUid} />
+        <GroupBoards groups={groups} sorted={allTime} meUid={meUid} onLeave={onLeaveGroup} />
       ) : scope === 'week' ? (
         <>
           <p className="mt-3 text-center text-[11px] font-semibold text-mist">
@@ -93,7 +93,10 @@ function Board({ sorted, meUid }) {
   );
 }
 
-function GroupBoards({ groups, sorted, meUid }) {
+function GroupBoards({ groups, sorted, meUid, onLeave }) {
+  const [selId, setSelId] = useState(null);
+  const [confirmLeave, setConfirmLeave] = useState(false);
+
   if (groups.length === 0) {
     return (
       <div className="mt-8 flex flex-col items-center justify-center px-6 text-center">
@@ -105,33 +108,85 @@ function GroupBoards({ groups, sorted, meUid }) {
       </div>
     );
   }
-  return (
-    <div className="mt-4 space-y-5">
-      {groups.map((g) => {
-        const memberSet = new Set(g.members || []);
-        const board = sorted.filter((u) => memberSet.has(u.uid));
-        return (
-          <div key={g.id}>
-            <div className="mb-2 flex items-center justify-between">
-              <h3 className="font-display text-lg">{g.name}</h3>
-              <span className="rounded-lg bg-panel2 px-2.5 py-1 font-display text-sm tracking-widest text-gold">
-                {g.code}
-              </span>
-            </div>
-            {board.length === 0 ? (
-              <p className="rounded-xl border border-line bg-panel px-3 py-3 text-xs font-semibold text-mist">
-                No points on the board yet — make some picks to get {g.name} started.
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {board.map((u, i) => (
-                  <Row key={u.uid} rank={i + 1} u={u} meUid={meUid} />
-                ))}
+
+  const sel = groups.find((g) => g.id === selId);
+
+  // List view — tap a group to open its board.
+  if (!sel) {
+    return (
+      <div className="mt-4 space-y-2">
+        <p className="px-1 text-[11px] font-semibold text-mist">Tap a group to see its board.</p>
+        {groups.map((g) => {
+          const members = g.members?.length ?? 0;
+          return (
+            <button
+              key={g.id}
+              onClick={() => setSelId(g.id)}
+              className="flex w-full items-center justify-between rounded-2xl border border-line bg-panel px-4 py-3 text-left transition active:scale-[0.99] hover:border-more/50"
+            >
+              <div>
+                <div className="text-sm font-bold">{g.name}</div>
+                <div className="text-[11px] font-semibold text-mist">{members} member{members === 1 ? '' : 's'}</div>
               </div>
-            )}
+              <div className="flex items-center gap-2">
+                <span className="rounded-lg bg-panel2 px-2.5 py-1 font-display text-sm tracking-widest text-gold">{g.code}</span>
+                <span className="text-lg text-mist">›</span>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // Single group's board.
+  const memberSet = new Set(sel.members || []);
+  const board = sorted.filter((u) => memberSet.has(u.uid));
+  return (
+    <div className="mt-3">
+      <button
+        onClick={() => { setSelId(null); setConfirmLeave(false); }}
+        className="inline-flex items-center gap-1 rounded-full border border-line bg-panel2 py-1.5 pl-2.5 pr-3.5 text-sm font-bold text-fg transition active:scale-95 hover:border-more/60"
+      >
+        ‹ All groups
+      </button>
+      <div className="mb-2 mt-3 flex items-center justify-between">
+        <h3 className="font-display text-2xl">{sel.name}</h3>
+        <span className="rounded-lg bg-panel2 px-2.5 py-1 font-display text-sm tracking-widest text-gold">{sel.code}</span>
+      </div>
+      {board.length === 0 ? (
+        <p className="rounded-xl border border-line bg-panel px-3 py-3 text-xs font-semibold text-mist">
+          No points on the board yet — make some picks to get {sel.name} started.
+        </p>
+      ) : (
+        <div className="space-y-2">
+          {board.map((u, i) => <Row key={u.uid} rank={i + 1} u={u} meUid={meUid} />)}
+        </div>
+      )}
+
+      <div className="mt-6 flex justify-center">
+        {confirmLeave ? (
+          <div className="flex items-center gap-2 text-xs font-semibold">
+            <span className="text-mist">Leave {sel.name}?</span>
+            <button
+              onClick={() => { onLeave?.(sel.id); setSelId(null); setConfirmLeave(false); }}
+              className="rounded-lg bg-less/15 px-3 py-1 font-bold text-less"
+            >
+              Leave
+            </button>
+            <button onClick={() => setConfirmLeave(false)} className="rounded-lg border border-line px-3 py-1 font-bold text-mist">
+              Cancel
+            </button>
           </div>
-        );
-      })}
+        ) : (
+          <button
+            onClick={() => setConfirmLeave(true)}
+            className="text-xs font-semibold text-mist underline-offset-2 transition hover:text-less hover:underline"
+          >
+            Leave this group
+          </button>
+        )}
+      </div>
     </div>
   );
 }
@@ -154,10 +209,7 @@ function Row({ rank, u, meUid }) {
     >
       <div className="flex items-center gap-3">
         <span className="w-5 text-center font-display text-lg text-mist">{rank}</span>
-        <div>
-          <div className="text-sm font-bold">{u.name}</div>
-          {u.year && <div className="text-[11px] font-semibold text-mist">Class of ’{String(u.year).slice(2)}</div>}
-        </div>
+        <div className="text-sm font-bold">{u.name}</div>
       </div>
       <div className="flex items-center gap-3">
         <span className="font-display text-xl text-gold">{u.points}</span>

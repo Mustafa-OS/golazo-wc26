@@ -55,9 +55,7 @@ export default function Profile({ rows, onHowTo }) {
         </div>
         <div className="min-w-0">
           <div className="truncate font-display text-2xl">{user.name}</div>
-          <div className="text-sm font-semibold text-mist">
-            {user.year ? `Imperial · Class of ’${String(user.year).slice(2)}` : 'Imperial'}
-          </div>
+          <div className="text-sm font-semibold text-mist">Imperial</div>
         </div>
       </div>
 

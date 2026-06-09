@@ -4,7 +4,7 @@ import { AuthProvider, useAuth } from './context/AuthContext.jsx';
 import { DataProvider, useData } from './context/DataContext.jsx';
 import { subscribeSlip, writeSlip } from './lib/slipStore.js';
 import { buildMatchdays, usDateKey, matchdayKickoff, LOCK_LEAD_MS } from './lib/matchday.js';
-import { subscribeMyGroups, createGroup, joinGroup } from './lib/groupStore.js';
+import { subscribeMyGroups, createGroup, joinGroup, leaveGroup } from './lib/groupStore.js';
 import AuthScreen from './pages/AuthScreen.jsx';
 import Onboarding from './pages/Onboarding.jsx';
 import Home from './pages/Home.jsx';
@@ -278,7 +278,7 @@ function MainApp() {
               onOpenMatchday={setViewingKey}
             />
           ))}
-        {tab === 'board' && <LeaderboardPage rows={rows} weekly={weekly} meUid={user.uid} groups={groups} />}
+        {tab === 'board' && <LeaderboardPage rows={rows} weekly={weekly} meUid={user.uid} groups={groups} onLeaveGroup={(id) => leaveGroup(user.uid, id)} />}
         {tab === 'groups' && (
           <GroupsPage
             groups={groups}

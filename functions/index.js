@@ -216,3 +216,16 @@ exports.joinGroup = onCall(async (req) => {
   await group.ref.update({ members: FieldValue.arrayUnion(req.auth.uid) });
   return { groupId: group.id, name: group.get('name') };
 });
+
+// --- Leave a group (callable) — group writes are blocked by rules, so removing
+// yourself goes through the server, like joining. -------------------------------
+exports.leaveGroup = onCall(async (req) => {
+  if (!req.auth) throw new HttpsError('unauthenticated', 'Sign in first.');
+  const gid = String(req.data.groupId || '').trim();
+  if (!gid) throw new HttpsError('invalid-argument', 'No group specified.');
+  const ref = db.doc(`groups/${gid}`);
+  const snap = await ref.get();
+  if (!snap.exists) throw new HttpsError('not-found', 'Group not found.');
+  await ref.update({ members: FieldValue.arrayRemove(req.auth.uid) });
+  return { ok: true };
+});

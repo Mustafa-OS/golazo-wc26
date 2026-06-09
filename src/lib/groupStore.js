@@ -108,3 +108,22 @@ export async function joinGroup(uid, code) {
     throw new Error(e?.message || 'Could not join that group.');
   }
 }
+
+// ---- leave a group ---------------------------------------------------------
+export async function leaveGroup(uid, groupId) {
+  if (MOCK_MODE) {
+    const reg = regRead();
+    const g = reg.find((x) => x.id === groupId);
+    if (g) { g.members = g.members.filter((m) => m !== uid); regWrite(reg); }
+    return { ok: true };
+  }
+
+  const { httpsCallable } = await import('firebase/functions');
+  const call = httpsCallable(fns, 'leaveGroup');
+  try {
+    const res = await call({ groupId });
+    return res.data; // { ok: true }
+  } catch (e) {
+    throw new Error(e?.message || 'Could not leave that group.');
+  }
+}
