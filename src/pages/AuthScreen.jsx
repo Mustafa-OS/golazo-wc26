@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
+import Flag from '../components/Flag.jsx';
 
 // Multicolour Google "G" (logo, used on the sign-in button per Google guidelines).
 function GoogleLogo({ size = 18 }) {
@@ -13,9 +14,18 @@ function GoogleLogo({ size = 18 }) {
   );
 }
 
+const CONFETTI = [
+  ['bg-gold', 'right-[7%] top-[14%] rotate-12'],
+  ['bg-azure', 'right-[20%] top-[30%] -rotate-12'],
+  ['bg-grape', 'left-[8%] top-[26%] rotate-45'],
+  ['bg-flame', 'left-[16%] top-[12%] rotate-6'],
+  ['bg-more', 'right-[12%] top-[52%] -rotate-6'],
+];
+
 const STEPS = [
   ['Call players MORE or LESS', 'on goals, shots, assists, saves…'],
   ['Best 5 picks a match day', 'pick across at least two countries'],
+  ['Captain & Power Play', 'double a pick, or risk it all for a big multiplier'],
   ['Top the Imperial leaderboard', 'weekly, all-time, or a private group'],
 ];
 
@@ -23,24 +33,63 @@ export default function AuthScreen() {
   const { signInGoogle, signInDemo, error, busy, mode } = useAuth();
 
   return (
-    <div className="mx-auto flex min-h-full max-w-md flex-col justify-center px-6 py-10">
-      {/* brand */}
-      <div className="text-center">
-        <div className="font-display text-6xl tracking-wide">
-          GOLAZO<span className="text-more">.</span>
+    <div className="mx-auto flex min-h-full max-w-md flex-col px-6 py-8">
+      {/* festive hero */}
+      <div className="relative overflow-hidden rounded-3xl border border-line bg-gradient-to-br from-grape/25 via-panel to-azure/20 px-5 pb-6 pt-8 text-center">
+        {CONFETTI.map(([c, pos], i) => (
+          <span key={i} className={`pointer-events-none absolute h-2.5 w-2.5 rounded-[2px] opacity-70 ${c} ${pos}`} />
+        ))}
+        <div className="relative">
+          <div className="font-display text-6xl leading-none tracking-wide">
+            GOLAZO<span className="text-more">.</span>
+          </div>
+          <div className="mt-2 text-[11px] font-semibold uppercase tracking-[0.3em] text-mist">
+            Imperial · World Cup 2026
+          </div>
+          <p className="mx-auto mt-4 max-w-xs text-sm font-semibold text-fg/90">
+            The free World Cup prediction game for Imperial — read the players, not just the results.
+          </p>
         </div>
-        <div className="mt-1 text-[11px] font-semibold uppercase tracking-[0.3em] text-mist">
-          Imperial · World Cup 2026
+      </div>
+
+      {/* live teaser of the core mechanic */}
+      <div className="mt-4">
+        <div className="mb-1.5 px-1 text-[11px] font-bold uppercase tracking-wide text-mist">Here’s the idea</div>
+        <div className="rounded-2xl border border-line bg-panel p-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <Flag team={{ name: 'France', code: 'FRA', flag: '🇫🇷' }} size="h-8 w-8" />
+              <div className="leading-tight">
+                <div className="text-sm font-bold">K. Mbappé</div>
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-mist">FWD · FRA</div>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="font-display text-4xl leading-none text-fg">0.5</div>
+              <div className="text-[10px] font-bold uppercase tracking-wide text-mist">Goals</div>
+            </div>
+          </div>
+          <div className="mt-3 text-center text-sm font-bold text-fg">
+            Will he score? <span className="text-more">MORE</span> or <span className="text-less">LESS</span> than 0.5?
+          </div>
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            <div className="flex items-center justify-between rounded-xl bg-more px-3.5 py-2.5 text-ink shadow-glow">
+              <span className="text-sm font-extrabold">▲ MORE</span>
+              <span className="font-display text-xl leading-none">+12</span>
+            </div>
+            <div className="flex items-center justify-between rounded-xl border border-line bg-panel2 px-3.5 py-2.5 text-less">
+              <span className="text-sm font-extrabold">▼ LESS</span>
+              <span className="font-display text-xl leading-none text-gold">+9</span>
+            </div>
+          </div>
+          <div className="mt-1.5 text-center text-[10px] text-mist">Riskier calls pay more · wrong picks score 0</div>
         </div>
-        <p className="mx-auto mt-4 max-w-xs text-sm font-semibold text-fg/90">
-          The free World Cup prediction game for Imperial. Read the players, not just the results.
-        </p>
       </div>
 
       {/* how it works */}
-      <div className="mt-7 space-y-2.5">
+      <div className="mt-5 space-y-2.5">
         {STEPS.map(([title, sub], i) => (
-          <div key={title} className="flex items-center gap-3 rounded-2xl border border-line bg-panel px-4 py-3">
+          <div key={title} className="flex items-center gap-3 rounded-2xl border border-line bg-panel px-4 py-2.5">
             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-more text-sm font-extrabold text-ink">
               {i + 1}
             </span>
@@ -53,7 +102,7 @@ export default function AuthScreen() {
       </div>
 
       {/* sign in */}
-      <div className="mt-7">
+      <div className="mt-6">
         <button
           onClick={signInGoogle}
           disabled={busy}
@@ -81,6 +130,10 @@ export default function AuthScreen() {
           </button>
         )}
       </div>
+
+      <p className="mt-6 text-center text-[11px] font-bold uppercase tracking-[0.18em] text-mist">
+        48 nations · 104 matches · one Imperial board
+      </p>
     </div>
   );
 }

@@ -90,11 +90,26 @@ const ELITE_KEYS = [
 ];
 
 /**
- * Attacking-output multiplier for a player's quality.
- *   elite ≈ 1.5×, star ≈ 1.2×, squad player = 1×.
+ * Attacking-output multiplier combining player quality AND how likely they are to
+ * start/feature (no lineup data pre-match, so fame is the proxy):
+ *   elite ≈ 1.55× (nailed-on starters), star ≈ 1.25× (well-known regulars),
+ *   squad player ≈ 0.8× (less likely to start or be a goal threat).
  */
 export function playerQuality(name) {
-  if (matchesAny(name, ELITE_KEYS)) return 1.5;
-  if (isStar(name)) return 1.2;
-  return 1.0;
+  if (matchesAny(name, ELITE_KEYS)) return 1.55;
+  if (isStar(name)) return 1.25;
+  return 0.8;
+}
+
+/**
+ * A small, STABLE per-player wobble (~0.88–1.12) so two same-tier players don't
+ * share identical lines/points. Deterministic from the name (no randomness, so
+ * regeneration is repeatable) — stands in for the form/role nuance we can't
+ * measure pre-tournament.
+ */
+export function playerVariance(name) {
+  const n = normalizeName(name);
+  let h = 0;
+  for (let i = 0; i < n.length; i++) h = (h * 31 + n.charCodeAt(i)) >>> 0;
+  return 0.88 + ((h % 1000) / 1000) * 0.24;
 }

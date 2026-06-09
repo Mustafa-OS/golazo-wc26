@@ -11,7 +11,7 @@
 // in Node and in the browser unchanged.
 // ============================================================================
 
-import { matchupContext, playerQuality } from './strength.js';
+import { matchupContext, playerQuality, playerVariance } from './strength.js';
 
 // Metrics we support. `key` must match the field we read back from the stats
 // feed when resolving (see functions/apiFootball.js -> normalisePlayerStats).
@@ -45,9 +45,9 @@ const POSITION_METRICS = {
 // Sanity: line = round(baseline) area; MORE ≈ P(X ≥ ceil(line)) lands ~25–55%.
 const POSITION_BASELINE = {
   G: { saves: 2.8, conceded: 1.15 },
-  D: { tackles: 2.1, shots: 0.5, passes: 50, goals: 0.07 },
-  M: { shots: 1.2, shotsOn: 0.5, assists: 0.18, tackles: 1.7, passes: 55, goals: 0.12 },
-  F: { goals: 0.45, shotsOn: 1.2, shots: 2.6, assists: 0.18 },
+  D: { tackles: 2.1, shots: 0.5, passes: 50, goals: 0.04 },
+  M: { shots: 1.2, shotsOn: 0.5, assists: 0.18, tackles: 1.7, passes: 55, goals: 0.07 },
+  F: { goals: 0.32, shotsOn: 1.2, shots: 2.6, assists: 0.18 },
 };
 
 // Round a raw baseline to a clean half-line (0.5, 1.5, 2.5 ...). Half-lines
@@ -68,7 +68,7 @@ function toHalfLine(value) {
 const OFFENSE = new Set(['goals', 'shotsOn', 'shots', 'assists']);
 // Keep every goals prop on a 0.5 line (== "scores at least one"); strength and
 // quality move the PAYOUT, not the threshold, so goal cards stay comparable.
-const GOALS_BASELINE_CAP = 0.9;
+const GOALS_BASELINE_CAP = 0.75;
 const clampMul = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
 /**
@@ -94,7 +94,7 @@ export function buildLine(player, metric, ctx) {
   // Adjust by matchup + quality when a match context is supplied.
   if (ctx) {
     if (OFFENSE.has(metric)) {
-      baseline *= clampMul((ctx.attackMult ?? 1) * (ctx.quality ?? 1), 0.5, 2.0);
+      baseline *= clampMul((ctx.attackMult ?? 1) * (ctx.quality ?? 1) * (ctx.variance ?? 1), 0.35, 2.2);
     } else if (metric === 'conceded') {
       baseline *= (ctx.concedeMult ?? 1);
     } else if (metric === 'saves') {
@@ -138,7 +138,7 @@ export function buildMatchProps(match) {
   const props = [];
   const addSide = (players, sideCtx) => {
     for (const player of players || []) {
-      const ctx = { ...sideCtx, quality: playerQuality(player.name) };
+      const ctx = { ...sideCtx, quality: playerQuality(player.name), variance: playerVariance(player.name) };
       for (const line of buildPlayerProps(player, ctx)) {
         props.push({
           id: `${match.id}:${player.id}:${line.metric}`,
