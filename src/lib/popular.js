@@ -132,17 +132,25 @@ export function isStar(name) {
 
 /**
  * The set of player IDs to show under "Popular" for a match.
- * @param {Array} players  position-ordered players (each { id, name, ... })
- * @returns {Set<string>}  ~6–7 headline players: known stars first, topped up
- *                         with the most attacking players so the tab is never
- *                         near-empty for a minnow-vs-minnow game.
+ * @param {Array} players  position-ordered players (each { id, name, teamCode })
+ * @returns {Set<string>}  up to `max` headline players: known stars first, topped
+ *                         up with the most attacking players so the tab is never
+ *                         near-empty — and ALWAYS at least one from each team, so
+ *                         a star-heavy side can't crowd the other team out.
  */
-export function popularIdSet(players, { min = 6, max = 7 } = {}) {
+export function popularIdSet(players, { max = 7 } = {}) {
   const stars = players.filter((p) => isStar(p.name));
-  let chosen = stars.slice(0, max);
-  if (chosen.length < min) {
-    const fill = players.filter((p) => !chosen.includes(p)); // already F→G ordered
-    chosen = [...chosen, ...fill].slice(0, max);
-  }
+  // Ranked candidates: known stars first (input order is position-sorted, F→G),
+  // then everyone else as fill.
+  const ranked = [...stars, ...players.filter((p) => !stars.includes(p))];
+  const teams = [...new Set(players.map((p) => p.teamCode))];
+
+  const chosen = [];
+  const take = (p) => { if (p && chosen.length < max && !chosen.includes(p)) chosen.push(p); };
+  // Guarantee at least one player from EACH team (its best-ranked candidate)…
+  for (const t of teams) take(ranked.find((p) => p.teamCode === t));
+  // …then fill the remaining slots by rank (stars first).
+  for (const p of ranked) take(p);
+
   return new Set(chosen.map((p) => p.id));
 }

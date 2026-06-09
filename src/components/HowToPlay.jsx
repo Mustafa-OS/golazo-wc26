@@ -25,9 +25,9 @@ export default function HowToPlay({ onClose }) {
         </div>
 
         <p className="mt-4 rounded-2xl border border-line bg-panel2 px-4 py-3 text-center text-[13px] font-semibold leading-snug text-white/90">
-          A free World Cup predictions game — no money, just bragging rights.
-          You call whether a player gets <span className="text-more">MORE</span> or{' '}
-          <span className="text-less">LESS</span> than their line. Best picks top the Imperial board.
+          A free World Cup predictions game. You call whether a player gets{' '}
+          <span className="text-more">MORE</span> or <span className="text-less">LESS</span> than
+          their line — best picks top the Imperial board.
         </p>
 
         <div className="mt-5 space-y-2.5">
@@ -43,10 +43,6 @@ export default function HowToPlay({ onClose }) {
             </div>
           ))}
         </div>
-
-        <p className="mt-4 text-center text-[12px] font-semibold text-mist">
-          No money. No betting. Just bragging rights.
-        </p>
 
         <button
           onClick={onClose}

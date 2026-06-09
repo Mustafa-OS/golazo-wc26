@@ -2,12 +2,15 @@
 // MATCH DAYS
 // ----------------------------------------------------------------------------
 // Group fixtures into match days by US Eastern calendar date (the 2026 WC is
-// US-hosted), and classify each as previous / open / upcoming. "Open" = within
-// the next OPEN_DAYS days and playable; upcoming = locked; previous = results.
+// US-hosted), and classify each as previous / open / upcoming. "Open" = the next
+// OPEN_COUNT not-yet-played match days (a rolling window — when one finishes the
+// next unlocks); upcoming = locked; previous = results.
 // ============================================================================
 
 export const US_TZ = 'America/New_York';
-const OPEN_DAYS = 4; // today + next 3 days are playable
+// The next 3 unplayed match days are playable; everything after them stays
+// locked and unlocks one-by-one as earlier match days finish.
+export const OPEN_COUNT = 3;
 
 export const usDateKey = (iso) =>
   new Intl.DateTimeFormat('en-CA', { timeZone: US_TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(iso));
@@ -26,12 +29,15 @@ export function buildMatchdays(matches) {
     byDay.get(k).push(m);
   }
   const today = usToday();
+  let openTaken = 0; // first OPEN_COUNT not-yet-played match days are open; rest lock
   return [...byDay.entries()]
     .sort((a, b) => (a[0] < b[0] ? -1 : 1))
     .map(([key, games], i) => {
       const sorted = [...games].sort((x, y) => new Date(x.kickoff) - new Date(y.kickoff));
-      const diff = dayDiff(today, key);
-      const status = diff < 0 ? 'previous' : diff <= OPEN_DAYS - 1 ? 'open' : 'upcoming';
+      let status;
+      if (dayDiff(today, key) < 0) status = 'previous';
+      else if (openTaken < OPEN_COUNT) { status = 'open'; openTaken += 1; }
+      else status = 'upcoming';
       return { key, n: i + 1, label: usDateLabel(sorted[0].kickoff), status, games: sorted };
     });
 }

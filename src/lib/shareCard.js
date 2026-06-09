@@ -123,7 +123,7 @@ export async function slipShareBlob({ picks, potential, mode = 'normal', captain
   ctx.fillText('golazo-wc.web.app', PAD, H - 168);
   ctx.font = '600 26px "Hanken Grotesk", system-ui, sans-serif';
   ctx.fillStyle = C.mist;
-  ctx.fillText('No betting · just bragging rights', PAD, H - 124);
+  ctx.fillText('Make your picks before kickoff', PAD, H - 124);
 
   return await new Promise((res) => canvas.toBlob(res, 'image/png'));
 }

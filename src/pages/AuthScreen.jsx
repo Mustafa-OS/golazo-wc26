@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 
 const PERKS = [
   'Tap MORE / LESS on real World Cup player lines',
-  'Best 5 picks a match day — no money, just points',
+  'Best 5 picks a match day — climb the leaderboard',
   'Climb the all-Imperial board or a private group',
 ];
 
@@ -165,10 +165,6 @@ export default function AuthScreen() {
           </>
         )}
       </div>
-
-      <p className="mt-5 text-center text-[11px] text-mist">
-        No betting. No money. Just bragging rights.
-      </p>
     </div>
   );
 }

@@ -24,6 +24,18 @@ const TABS = [
   { id: 'previous', label: 'Results' },
 ];
 
+// WC 2026 knockout rounds — shown as locked "to be confirmed" cards in the
+// Upcoming tab until the real bracket loads (teams + exact fixtures fill in once
+// the group stage is decided).
+const KNOCKOUT_ROUNDS = [
+  { round: 'Round of 32', when: '28 Jun – 3 Jul', games: 16 },
+  { round: 'Round of 16', when: '4 – 7 Jul', games: 8 },
+  { round: 'Quarter-finals', when: '9 – 11 Jul', games: 4 },
+  { round: 'Semi-finals', when: '14 – 15 Jul', games: 2 },
+  { round: 'Third place', when: '18 Jul', games: 1 },
+  { round: 'Final', when: '19 Jul', games: 1 },
+];
+
 export default function Today({ matches, pickFor, onPick, max, count, locked, uid, onOpenMatchday }) {
   const [tab, setTab] = useState('open');
   const [dayKey, setDayKey] = useState(null);
@@ -53,6 +65,9 @@ export default function Today({ matches, pickFor, onPick, max, count, locked, ui
   }
   // Level 1 — match-day list with the Open/Upcoming/Previous toggle.
   const list = matchdays.filter((d) => d.status === tab);
+  // Until the real knockout fixtures load, show the bracket as locked TBC cards.
+  const hasRealKnockouts = matches.some((m) => m.stage && !/group/i.test(m.stage));
+  const showKnockouts = tab === 'upcoming' && !hasRealKnockouts;
   return (
     <div>
       <h1 className="mt-2 font-display text-3xl">MATCH DAYS</h1>
@@ -71,13 +86,44 @@ export default function Today({ matches, pickFor, onPick, max, count, locked, ui
         ))}
       </div>
 
-      {list.length === 0 ? (
-        <EmptyTab tab={tab} />
-      ) : (
+      {list.length > 0 && (
         <div className="mt-3 space-y-2.5">
           {list.map((d) => <MatchdayCard key={d.key} d={d} onPick={setDayKey} />)}
         </div>
       )}
+      {showKnockouts && <KnockoutSection />}
+      {list.length === 0 && !showKnockouts && <EmptyTab tab={tab} />}
+    </div>
+  );
+}
+
+function KnockoutSection() {
+  return (
+    <div className="mt-6">
+      <div className="mb-2 flex items-center gap-2 px-1">
+        <span className="font-display text-lg">KNOCKOUT STAGE</span>
+        <span className="rounded-full bg-panel2 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-mist">
+          To be confirmed
+        </span>
+      </div>
+      <div className="space-y-2.5">
+        {KNOCKOUT_ROUNDS.map((r) => (
+          <div key={r.round} className="relative overflow-hidden rounded-2xl border border-line bg-panel/40 p-4 opacity-70">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="font-display text-xl leading-none">{r.round.toUpperCase()}</div>
+                <div className="mt-1 text-xs font-semibold text-mist">
+                  {r.when} · {r.games} {r.games === 1 ? 'game' : 'games'}
+                </div>
+              </div>
+              <span className="flex items-center gap-1 rounded-full bg-panel2 px-3 py-1 text-xs font-bold text-mist">
+                <IconLock size={12} /> Locked
+              </span>
+            </div>
+            <div className="mt-2 text-[11px] font-semibold text-mist">Teams set after the group stage.</div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -233,8 +279,8 @@ function SlipBar({ count, max }) {
 
 function EmptyTab({ tab }) {
   const msg = tab === 'open'
-    ? 'No match days open right now — the next ones unlock 4 days out.'
-    : tab === 'upcoming' ? 'No upcoming match days loaded yet.' : 'No finished match days yet.';
+    ? 'No match days open right now — check back soon.'
+    : tab === 'upcoming' ? 'Nothing else scheduled yet.' : 'No finished match days yet.';
   return (
     <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
       <p className="max-w-xs text-sm font-semibold text-mist">{msg}</p>

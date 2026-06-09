@@ -19,7 +19,7 @@ export default function Profile({ rows }) {
 
   async function shareApp() {
     const url = window.location.origin + window.location.pathname;
-    const text = "I'm playing GOLAZO. — Imperial's World Cup 2026 props game. No betting, just bragging rights. Get on:";
+    const text = "I'm playing GOLAZO. — Imperial's World Cup 2026 predictions game. Get on:";
     try {
       if (navigator.share) {
         await navigator.share({ title: 'GOLAZO.', text, url });
@@ -98,7 +98,7 @@ export default function Profile({ rows }) {
         onClick={shareApp}
         className="mt-3 w-full rounded-2xl bg-more py-3.5 font-display text-lg tracking-wide text-ink transition active:scale-[0.98]"
       >
-        {copied ? 'LINK COPIED' : 'INVITE YOUR MATES'}
+        {copied ? 'LINK COPIED' : 'INVITE YOUR FRIENDS'}
       </button>
 
       <button

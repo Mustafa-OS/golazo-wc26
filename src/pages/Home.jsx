@@ -117,7 +117,7 @@ export default function Home({ matches = [], rows = [], count = 0, max = 5, onGo
         onClick={onInvite}
         className="w-full rounded-2xl border border-line bg-panel2 py-3 text-sm font-bold text-more transition active:scale-[0.98]"
       >
-        Invite your mates
+        Invite your friends
       </button>
     </div>
   );
