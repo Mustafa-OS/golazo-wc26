@@ -164,26 +164,31 @@ function GroupBoards({ groups, sorted, meUid, onLeave }) {
         </div>
       )}
 
-      <div className="mt-6 flex justify-center">
+      <div className="mt-6">
         {confirmLeave ? (
-          <div className="flex items-center gap-2 text-xs font-semibold">
-            <span className="text-mist">Leave {sel.name}?</span>
-            <button
-              onClick={() => { onLeave?.(sel.id); setSelId(null); setConfirmLeave(false); }}
-              className="rounded-lg bg-less/15 px-3 py-1 font-bold text-less"
-            >
-              Leave
-            </button>
-            <button onClick={() => setConfirmLeave(false)} className="rounded-lg border border-line px-3 py-1 font-bold text-mist">
-              Cancel
-            </button>
+          <div>
+            <p className="mb-2 text-center text-sm font-bold text-fg">Leave {sel.name}?</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => { onLeave?.(sel.id); setSelId(null); setConfirmLeave(false); }}
+                className="flex-1 rounded-2xl bg-less py-3.5 font-display text-lg tracking-wide text-ink transition active:scale-[0.98]"
+              >
+                LEAVE
+              </button>
+              <button
+                onClick={() => setConfirmLeave(false)}
+                className="shrink-0 rounded-2xl border border-line bg-panel2 px-6 text-sm font-bold text-mist transition active:scale-[0.98]"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         ) : (
           <button
             onClick={() => setConfirmLeave(true)}
-            className="text-xs font-semibold text-mist underline-offset-2 transition hover:text-less hover:underline"
+            className="w-full rounded-2xl bg-less py-3.5 font-display text-lg tracking-wide text-ink shadow-glowless transition active:scale-[0.98]"
           >
-            Leave this group
+            LEAVE THIS GROUP
           </button>
         )}
       </div>
