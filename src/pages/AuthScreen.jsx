@@ -52,8 +52,38 @@ export default function AuthScreen() {
         </div>
       </div>
 
-      {/* live teaser of the core mechanic */}
+      {/* sign in — primary CTA, above the explainer */}
       <div className="mt-5">
+        <button
+          onClick={signInGoogle}
+          disabled={busy}
+          className="flex w-full items-center justify-center gap-3 rounded-2xl bg-white py-3.5 font-bold text-[#1f2937] shadow-sm transition active:scale-[0.98] disabled:opacity-60"
+        >
+          <GoogleLogo size={20} />
+          {busy ? 'One sec…' : 'Continue with Google'}
+        </button>
+        <p className="mt-2.5 text-center text-[11px] font-semibold text-mist">
+          Imperial students — you’ll confirm your shortcode next to get in.
+        </p>
+
+        {error && (
+          <div className="mt-3 rounded-xl border border-less/40 bg-less/10 px-3.5 py-2.5 text-center text-sm font-semibold text-less">
+            {error}
+          </div>
+        )}
+
+        {mode === 'mock' && (
+          <button
+            onClick={signInDemo}
+            className="mt-3 w-full rounded-2xl border border-line bg-panel2 py-3 text-sm font-bold text-more transition active:scale-[0.98]"
+          >
+            Try the demo — skip sign in
+          </button>
+        )}
+      </div>
+
+      {/* live teaser of the core mechanic */}
+      <div className="mt-6">
         <div className="mb-2 px-1 text-center">
           <div className="font-display text-2xl tracking-wide">HERE’S THE IDEA</div>
           <div className="mt-0.5 text-[13px] font-semibold text-mist">
@@ -106,37 +136,7 @@ export default function AuthScreen() {
         ))}
       </div>
 
-      {/* sign in */}
-      <div className="mt-6">
-        <button
-          onClick={signInGoogle}
-          disabled={busy}
-          className="flex w-full items-center justify-center gap-3 rounded-2xl bg-white py-3.5 font-bold text-[#1f2937] shadow-sm transition active:scale-[0.98] disabled:opacity-60"
-        >
-          <GoogleLogo size={20} />
-          {busy ? 'One sec…' : 'Continue with Google'}
-        </button>
-        <p className="mt-2.5 text-center text-[11px] font-semibold text-mist">
-          Imperial students — you’ll confirm your shortcode next to get in.
-        </p>
-
-        {error && (
-          <div className="mt-3 rounded-xl border border-less/40 bg-less/10 px-3.5 py-2.5 text-center text-sm font-semibold text-less">
-            {error}
-          </div>
-        )}
-
-        {mode === 'mock' && (
-          <button
-            onClick={signInDemo}
-            className="mt-3 w-full rounded-2xl border border-line bg-panel2 py-3 text-sm font-bold text-more transition active:scale-[0.98]"
-          >
-            Try the demo — skip sign in
-          </button>
-        )}
-      </div>
-
-      <p className="mt-6 text-center text-[11px] font-bold uppercase tracking-[0.18em] text-mist">
+      <p className="mt-7 text-center text-[11px] font-bold uppercase tracking-[0.18em] text-mist">
         48 nations · 104 matches · one Imperial board
       </p>
     </div>
