@@ -23,10 +23,10 @@ const CONFETTI = [
 ];
 
 const STEPS = [
-  ['Call players MORE or LESS', 'on goals, shots, assists, saves…'],
-  ['Best 5 picks a match day', 'pick across at least two countries'],
-  ['Captain & Power Play', 'double a pick, or risk it all for a big multiplier'],
-  ['Top the Imperial leaderboard', 'weekly, all-time, or a private group'],
+  'Call MORE or LESS on goals, shots, assists…',
+  'Make 5 predictions every match day to earn points',
+  'Riskier calls are worth more points',
+  'Top the Imperial leaderboard',
 ];
 
 export default function AuthScreen() {
@@ -123,15 +123,12 @@ export default function AuthScreen() {
 
       {/* how it works */}
       <div className="mt-5 space-y-2.5">
-        {STEPS.map(([title, sub], i) => (
-          <div key={title} className="flex items-center gap-3 rounded-2xl border border-line bg-panel px-4 py-2.5">
+        {STEPS.map((step, i) => (
+          <div key={i} className="flex items-center gap-3 rounded-2xl border border-line bg-panel px-4 py-3">
             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-more text-sm font-extrabold text-ink">
               {i + 1}
             </span>
-            <div className="leading-tight">
-              <div className="text-sm font-bold">{title}</div>
-              <div className="text-[12px] font-medium text-mist">{sub}</div>
-            </div>
+            <div className="text-[15px] font-bold leading-snug">{step}</div>
           </div>
         ))}
       </div>
