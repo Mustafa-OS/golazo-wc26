@@ -24,7 +24,7 @@ export default function HowToPlay({ onClose }) {
           </p>
         </div>
 
-        <p className="mt-4 rounded-2xl border border-line bg-panel2 px-4 py-3 text-center text-[13px] font-semibold leading-snug text-white/90">
+        <p className="mt-4 rounded-2xl border border-line bg-panel2 px-4 py-3 text-center text-[13px] font-semibold leading-snug text-fg/90">
           A free World Cup predictions game. You call whether a player gets{' '}
           <span className="text-more">MORE</span> or <span className="text-less">LESS</span> than
           their line — best picks top the Imperial board.

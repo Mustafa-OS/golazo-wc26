@@ -258,7 +258,7 @@ function BackHeader({ onBack, title, sub }) {
   return (
     <div className="mt-2 flex items-center gap-3">
       <button onClick={onBack} aria-label="Back"
-        className="flex h-9 w-9 items-center justify-center rounded-full border border-line bg-panel text-lg text-mist transition active:scale-95 hover:text-white">‹</button>
+        className="flex h-9 w-9 items-center justify-center rounded-full border border-line bg-panel text-lg text-mist transition active:scale-95 hover:text-fg">‹</button>
       <div className="leading-tight">
         <div className="font-display text-2xl">{title}</div>
         {sub && <div className="text-[11px] font-semibold text-mist">{sub}</div>}
@@ -271,7 +271,7 @@ function SlipBar({ count, max }) {
   return (
     <div className="mt-2 flex items-center justify-between rounded-xl border border-line bg-panel px-3 py-2">
       <span className="text-xs font-semibold text-mist">
-        Lock in your best <span className="text-white">{max}</span> for the match day.
+        Lock in your best <span className="text-fg">{max}</span> for the match day.
       </span>
       <span className="font-display text-lg text-gold">{count}/{max}</span>
     </div>

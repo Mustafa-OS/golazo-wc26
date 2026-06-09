@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { pickValue } from './lib/scoringEngine.js';
 import { AuthProvider, useAuth } from './context/AuthContext.jsx';
+import { ThemeProvider, useTheme } from './context/ThemeContext.jsx';
 import { DataProvider, useData } from './context/DataContext.jsx';
 import { subscribeSlip, writeSlip } from './lib/slipStore.js';
 import { buildMatchdays, usDateKey, matchdayKickoff, LOCK_LEAD_MS } from './lib/matchday.js';
@@ -15,7 +16,7 @@ import Profile from './pages/Profile.jsx';
 import PickSlip from './components/PickSlip.jsx';
 import HowToPlay from './components/HowToPlay.jsx';
 import Pitch from './components/Pitch.jsx';
-import { IconHome, IconBall, IconTrophy, IconUsers, IconUser, IconInfo } from './components/Icons.jsx';
+import { IconHome, IconBall, IconTrophy, IconUsers, IconUser, IconInfo, IconSun, IconMoon } from './components/Icons.jsx';
 
 const MAX_PICKS = 5;
 
@@ -29,9 +30,11 @@ const NAV = [
 
 export default function App() {
   return (
-    <AuthProvider>
-      <Root />
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <Root />
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 
@@ -332,8 +335,9 @@ function MainApp() {
 }
 
 function Header({ picks, max, onOpenSlip, onHelp, onHome }) {
+  const { theme, toggle } = useTheme();
   return (
-    <header className="sticky top-0 z-20 flex items-center justify-between border-b border-line bg-ink/85 px-4 py-3 backdrop-blur">
+    <header className="sticky top-0 z-20 flex items-center justify-between border-b border-line bg-bg/85 px-4 py-3 backdrop-blur">
       <button onClick={onHome} aria-label="Home" className="text-left leading-none transition active:scale-95">
         <div className="font-display text-2xl tracking-wide">
           GOLAZO<span className="text-more">.</span>
@@ -344,16 +348,23 @@ function Header({ picks, max, onOpenSlip, onHelp, onHome }) {
       </button>
       <div className="flex items-center gap-2">
         <button
+          onClick={toggle}
+          aria-label="Toggle light or dark mode"
+          className="flex h-9 w-9 items-center justify-center rounded-full border border-line bg-panel2 text-mist transition active:scale-95 hover:text-fg"
+        >
+          {theme === 'dark' ? <IconSun size={18} /> : <IconMoon size={18} />}
+        </button>
+        <button
           onClick={onHelp}
           aria-label="How to play"
-          className="flex h-9 w-9 items-center justify-center rounded-full border border-line bg-panel2 text-mist transition active:scale-95 hover:text-white"
+          className="flex h-9 w-9 items-center justify-center rounded-full border border-line bg-panel2 text-mist transition active:scale-95 hover:text-fg"
         >
           <IconInfo size={18} />
         </button>
         <button
           onClick={onOpenSlip}
           className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-extrabold transition active:scale-95 ${
-            picks.length > 0 ? 'bg-more text-ink shadow-glow' : 'border border-line bg-panel2 text-white'
+            picks.length > 0 ? 'bg-more text-ink shadow-glow' : 'border border-line bg-panel2 text-fg'
           }`}
         >
           <span>My Picks</span>
@@ -396,7 +407,7 @@ function EmptyToday() {
 
 function BottomNav({ tab, setTab }) {
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-20 mx-auto max-w-md border-t border-line bg-ink/95 backdrop-blur">
+    <nav className="fixed inset-x-0 bottom-0 z-20 mx-auto max-w-md border-t border-line bg-bg/95 backdrop-blur">
       <div className="grid grid-cols-5">
         {NAV.map((n) => (
           <button

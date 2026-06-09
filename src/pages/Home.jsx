@@ -51,7 +51,7 @@ export default function Home({ matches = [], rows = [], count = 0, max = 5, onGo
           <div className="mt-1 text-[11px] font-bold uppercase tracking-[0.28em] text-mist">
             Imperial · World Cup 2026
           </div>
-          <p className="mt-3 text-sm font-semibold text-white/90">
+          <p className="mt-3 text-sm font-semibold text-fg/90">
             Hey {user.name?.split(' ')[0] || 'there'} — the tournament’s on. Make your calls.
           </p>
           <p className="mt-1.5 text-[12px] font-medium leading-snug text-mist">

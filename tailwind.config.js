@@ -8,15 +8,20 @@ export default {
         body: ['"Hanken Grotesk"', 'system-ui', 'sans-serif'],
       },
       colors: {
-        ink: '#070E1A',        // deep navy base
-        panel: '#0F1B30',      // card
-        panel2: '#16263F',     // raised card
-        line: '#23344f',       // borders
+        // Fixed dark navy — used as TEXT on bright accent buttons + translucent
+        // pills on lime (text-ink, bg-ink/20). NOT the page background.
+        ink: '#070E1A',
+        // Theme-aware (CSS vars flip between light/dark — see index.css).
+        bg: 'rgb(var(--bg) / <alpha-value>)',          // page background
+        panel: 'rgb(var(--panel) / <alpha-value>)',    // card
+        panel2: 'rgb(var(--panel2) / <alpha-value>)',  // raised card
+        line: 'rgb(var(--line) / <alpha-value>)',      // borders
+        mist: 'rgb(var(--mist) / <alpha-value>)',      // muted text
+        fg: 'rgb(var(--fg) / <alpha-value>)',          // primary text
+        // Fixed brand accents (legible on both themes).
         more: '#C6FF3E',       // electric lime  (MORE)
         less: '#FF5C7A',       // hot coral      (LESS)
-        gold: '#FFC83D',       // points / streak / trophy
-        mist: '#8DA0BC',       // muted text
-        // festive World-Cup accents (confetti, stat tiles, gradients)
+        gold: '#FFC83D',       // points / trophy
         azure: '#37C5FF',      // vivid blue
         grape: '#9B6CFF',      // purple
         flame: '#FF8A3D',      // orange

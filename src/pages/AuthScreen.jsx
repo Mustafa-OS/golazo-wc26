@@ -32,7 +32,7 @@ export default function AuthScreen() {
         <div className="mt-1 text-[11px] font-semibold uppercase tracking-[0.3em] text-mist">
           Imperial · World Cup 2026
         </div>
-        <p className="mx-auto mt-4 max-w-xs text-sm font-semibold text-white/90">
+        <p className="mx-auto mt-4 max-w-xs text-sm font-semibold text-fg/90">
           The free World Cup prediction game for Imperial. Read the players, not just the results.
         </p>
       </div>

@@ -58,7 +58,7 @@ export default function PropCard({ player, props, pickFor, onPick, locked, atCap
           </div>
         </div>
         <div className="text-right">
-          <div className="font-display text-5xl leading-none text-white">{active.line}</div>
+          <div className="font-display text-5xl leading-none text-fg">{active.line}</div>
           <div className="mt-0.5 text-[11px] font-bold uppercase tracking-wide text-mist">{ml(active.metric)}</div>
         </div>
       </div>
@@ -74,7 +74,7 @@ export default function PropCard({ player, props, pickFor, onPick, locked, atCap
                 key={p.metric}
                 onClick={() => setMetric(p.metric)}
                 className={`flex shrink-0 items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-bold transition ${
-                  sel ? 'bg-panel2 text-white ring-1 ring-line' : 'text-mist hover:text-white'
+                  sel ? 'bg-panel2 text-fg ring-1 ring-line' : 'text-mist hover:text-fg'
                 }`}
               >
                 {ml(p.metric)}
@@ -85,7 +85,7 @@ export default function PropCard({ player, props, pickFor, onPick, locked, atCap
         </div>
       )}
 
-      <div className="mt-3 text-center text-base font-bold text-white">
+      <div className="mt-3 text-center text-base font-bold text-fg">
         More or less than <span className="text-more">{active.line}</span> {ml(active.metric).toLowerCase()}?
       </div>
       <div className="mt-2 grid grid-cols-2 gap-2">

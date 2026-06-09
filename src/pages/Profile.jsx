@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useTheme } from '../context/ThemeContext.jsx';
 import { qrDataUrl } from '../lib/shareCard.js';
 
 export default function Profile({ rows, onHowTo }) {
   const { user, signOut, mode } = useAuth();
+  const { theme, toggle } = useTheme();
   const [copied, setCopied] = useState(false);
   const [qr, setQr] = useState('');
 
@@ -72,7 +74,7 @@ export default function Profile({ rows, onHowTo }) {
 
       <div className="mt-5 rounded-2xl border border-line bg-gradient-to-br from-grape/20 via-panel to-azure/15 p-4">
         <div className="text-xs font-bold uppercase tracking-wide text-mist">About Golazo</div>
-        <p className="mt-2 text-sm font-medium leading-snug text-white/90">
+        <p className="mt-2 text-sm font-medium leading-snug text-fg/90">
           Imperial’s free World Cup 2026 prediction game. Call whether players go{' '}
           <span className="font-bold text-more">MORE</span> or{' '}
           <span className="font-bold text-less">LESS</span> than their line, build your best 5 picks
@@ -115,6 +117,17 @@ export default function Profile({ rows, onHowTo }) {
         className="mt-3 w-full rounded-2xl bg-more py-3.5 font-display text-lg tracking-wide text-ink transition active:scale-[0.98]"
       >
         {copied ? 'LINK COPIED' : 'INVITE YOUR FRIENDS'}
+      </button>
+
+      <button
+        onClick={toggle}
+        className="mt-3 flex w-full items-center justify-between rounded-2xl border border-line bg-panel px-4 py-3 text-sm font-bold transition active:scale-[0.98]"
+      >
+        <span>Appearance</span>
+        <span className="flex items-center gap-2 text-mist">
+          {theme === 'dark' ? 'Dark' : 'Light'} mode
+          <span className="rounded-full bg-panel2 px-2 py-0.5 text-[11px] font-bold text-more">Switch</span>
+        </span>
       </button>
 
       <button

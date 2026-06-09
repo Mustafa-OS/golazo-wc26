@@ -78,7 +78,7 @@ export default function PickSlip({
             <button
               onClick={onClose}
               aria-label="Close"
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-panel2 text-mist transition hover:text-white"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-panel2 text-mist transition hover:text-fg"
             >
               ✕
             </button>
@@ -100,7 +100,7 @@ export default function PickSlip({
                     mode === m.id ? 'border-more bg-more/15' : 'border-line bg-panel2'
                   }`}
                 >
-                  <div className={`text-sm font-extrabold ${mode === m.id ? 'text-more' : 'text-white'}`}>{m.label}</div>
+                  <div className={`text-sm font-extrabold ${mode === m.id ? 'text-more' : 'text-fg'}`}>{m.label}</div>
                   <div className="mt-0.5 text-[10px] font-semibold leading-tight text-mist">{m.sub}</div>
                 </button>
               ))}
