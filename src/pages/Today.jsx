@@ -346,9 +346,14 @@ function MatchProps({ match, onBack, games, onSwitchGame, pickFor, onPick, max, 
         sub={match.stage} />
 
       {games && games.length > 1 && (
-        <div className="mt-3">
-          <div className="mb-1.5 px-0.5 text-[10px] font-bold uppercase tracking-wide text-mist">
-            Games this match day — tap to switch
+        <div className="mt-3 rounded-2xl border border-line bg-panel/60 p-3">
+          <div className="mb-2 flex items-center justify-between px-0.5">
+            <span className="text-[11px] font-bold uppercase tracking-wide text-mist">
+              Match-day games · {games.length}
+            </span>
+            <span className="rounded-full bg-more/15 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-more">
+              Tap to switch
+            </span>
           </div>
           <div className="flex flex-wrap gap-2">
             {games.map((g) => {
@@ -357,11 +362,25 @@ function MatchProps({ match, onBack, games, onSwitchGame, pickFor, onPick, max, 
                 <button
                   key={g.id}
                   onClick={() => onSwitchGame?.(g.id)}
-                  className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition ${
-                    cur ? 'bg-more text-ink' : 'border border-line bg-panel text-mist hover:border-more/60'
+                  aria-current={cur}
+                  className={`flex items-center gap-2 rounded-xl border px-3 py-2 transition active:scale-[0.97] ${
+                    cur
+                      ? 'border-more bg-more/15 ring-1 ring-more/60'
+                      : 'border-line bg-panel2 hover:border-more/50'
                   }`}
                 >
-                  {teamShort(g.home.name, g.home.code)} v {teamShort(g.away.name, g.away.code)}
+                  <span className="flex items-center gap-1">
+                    <Flag team={g.home} size="h-5 w-5" />
+                    <Flag team={g.away} size="h-5 w-5" />
+                  </span>
+                  <span className="text-left leading-tight">
+                    <span className={`block text-xs font-extrabold ${cur ? 'text-more' : 'text-fg'}`}>
+                      {teamShort(g.home.name, g.home.code)} v {teamShort(g.away.name, g.away.code)}
+                    </span>
+                    <span className="block text-[10px] font-semibold text-mist">
+                      {cur ? 'Viewing now' : `Kicks off ${ukTime(g.kickoff)} UK`}
+                    </span>
+                  </span>
                 </button>
               );
             })}
