@@ -171,13 +171,13 @@ function GroupBoards({ groups, sorted, meUid, onLeave }) {
             <div className="flex gap-2">
               <button
                 onClick={() => { onLeave?.(sel.id); setSelId(null); setConfirmLeave(false); }}
-                className="flex-1 rounded-2xl bg-less py-3.5 font-display text-lg tracking-wide text-ink transition active:scale-[0.98]"
+                className="flex-1 rounded-xl bg-less py-2.5 text-sm font-extrabold uppercase tracking-wide text-ink transition active:scale-[0.98]"
               >
-                LEAVE
+                Leave
               </button>
               <button
                 onClick={() => setConfirmLeave(false)}
-                className="shrink-0 rounded-2xl border border-line bg-panel2 px-6 text-sm font-bold text-mist transition active:scale-[0.98]"
+                className="shrink-0 rounded-xl border border-line bg-panel2 px-6 py-2.5 text-sm font-bold text-mist transition active:scale-[0.98]"
               >
                 Cancel
               </button>
@@ -186,9 +186,9 @@ function GroupBoards({ groups, sorted, meUid, onLeave }) {
         ) : (
           <button
             onClick={() => setConfirmLeave(true)}
-            className="w-full rounded-2xl bg-less py-3.5 font-display text-lg tracking-wide text-ink shadow-glowless transition active:scale-[0.98]"
+            className="w-full rounded-xl bg-less py-2.5 text-sm font-extrabold uppercase tracking-wide text-ink transition active:scale-[0.98]"
           >
-            LEAVE THIS GROUP
+            Leave this group
           </button>
         )}
       </div>
