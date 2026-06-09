@@ -94,6 +94,13 @@ export function buildLine(player, metric, ctx) {
   // Adjust by matchup + quality when a match context is supplied.
   if (ctx) {
     if (OFFENSE.has(metric)) {
+      // Star/elite MIDFIELDERS are usually attacking (Bruno Fernandes, De Bruyne,
+      // Bellingham…) — don't let a midfield position default suppress their goal
+      // threat to a defensive level; lift toward a forward's base.
+      const fBase = POSITION_BASELINE.F[metric];
+      if (pos === 'M' && (ctx.quality ?? 1) >= 1.3 && fBase != null) {
+        baseline = Math.max(baseline, fBase * 0.55);
+      }
       // Clamp the strength × quality effect, THEN apply the per-player variance —
       // so even at the clamp ceiling/floor (big mismatches) every player stays distinct.
       baseline *= clampMul((ctx.attackMult ?? 1) * (ctx.quality ?? 1), 0.35, 2.2) * (ctx.variance ?? 1);

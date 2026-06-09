@@ -86,7 +86,7 @@ const ELITE_KEYS = [
   'm salah', 'mohamed salah', 'de bruyne', 'musiala', 'wirtz', 'yamal', 'rodri',
   'foden', 'saka', 'lewandowski', 'kvaratskhelia', 'osimhen', 'son heung min',
   'neymar', 'griezmann', 'rodrygo', 'pedri', 'lautaro martinez', 'l martinez',
-  'julian alvarez', 'vitinha', 'olmo', 'leao',
+  'julian alvarez', 'vitinha', 'olmo', 'leao', 'bruno fernandes', 'b fernandes',
 ];
 
 /**
@@ -96,8 +96,8 @@ const ELITE_KEYS = [
  *   squad player ≈ 0.8× (less likely to start or be a goal threat).
  */
 export function playerQuality(name) {
-  if (matchesAny(name, ELITE_KEYS)) return 1.55;
-  if (isStar(name)) return 1.25;
+  if (matchesAny(name, ELITE_KEYS)) return 1.8;
+  if (isStar(name)) return 1.4;
   return 0.8;
 }
 
