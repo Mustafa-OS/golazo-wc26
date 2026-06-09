@@ -94,7 +94,9 @@ export function buildLine(player, metric, ctx) {
   // Adjust by matchup + quality when a match context is supplied.
   if (ctx) {
     if (OFFENSE.has(metric)) {
-      baseline *= clampMul((ctx.attackMult ?? 1) * (ctx.quality ?? 1) * (ctx.variance ?? 1), 0.35, 2.2);
+      // Clamp the strength × quality effect, THEN apply the per-player variance —
+      // so even at the clamp ceiling/floor (big mismatches) every player stays distinct.
+      baseline *= clampMul((ctx.attackMult ?? 1) * (ctx.quality ?? 1), 0.35, 2.2) * (ctx.variance ?? 1);
     } else if (metric === 'conceded') {
       baseline *= (ctx.concedeMult ?? 1);
     } else if (metric === 'saves') {
