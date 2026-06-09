@@ -14,6 +14,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { MOCK_MODE, db } from '../firebase.js';
 import { MOCK_MATCHES, MOCK_LEADERBOARD, MOCK_WEEKLY } from '../lib/mockData.js';
 import { buildMatchProps } from '../lib/lineEngine.js';
+import { buildMatchdays } from '../lib/matchday.js';
 
 const DataCtx = createContext(null);
 export const useData = () => useContext(DataCtx);
@@ -66,15 +67,21 @@ export function DataProvider({ children }) {
         matchesQ,
         (snap) => {
           matchDocs = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-          const ids = new Set(matchDocs.map((m) => m.id));
-
-          // Drop listeners for matches that went away.
+          // Only OPEN match days are playable, so only THOSE matches need their
+          // props loaded — every locked/finished match's ~230 prop docs would be
+          // dead reads. Cuts Firestore reads ~5x vs subscribing to all 72 matches.
+          const openIds = new Set(
+            buildMatchdays(matchDocs)
+              .filter((d) => d.status === 'open')
+              .flatMap((d) => d.games.map((g) => g.id))
+          );
+          // Drop prop listeners for matches that are gone or no longer open.
           for (const [id, unsub] of propUnsubs) {
-            if (!ids.has(id)) { unsub(); propUnsubs.delete(id); propData.delete(id); }
+            if (!openIds.has(id)) { unsub(); propUnsubs.delete(id); propData.delete(id); }
           }
-          // Add a props listener for each new match.
+          // Subscribe to props only for currently-open matches that lack a listener.
           for (const m of matchDocs) {
-            if (!propUnsubs.has(m.id)) {
+            if (openIds.has(m.id) && !propUnsubs.has(m.id)) {
               const unsub = onSnapshot(collection(db, 'matches', m.id, 'props'), (ps) => {
                 propData.set(m.id, ps.docs.map((d) => d.data()));
                 publish();
