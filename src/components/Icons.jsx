@@ -14,3 +14,5 @@ export const IconUsers = (p) => (<Svg {...p}><circle cx="9" cy="8" r="3" /><path
 export const IconUser = (p) => (<Svg {...p}><circle cx="12" cy="8" r="3.4" /><path d="M5 20a7 7 0 0 1 14 0" /></Svg>);
 export const IconInfo = (p) => (<Svg {...p}><circle cx="12" cy="12" r="9" /><path d="M12 11v5" /><path d="M12 7.6h.01" /></Svg>);
 export const IconLock = (p) => (<Svg {...p}><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></Svg>);
+// Filled star — marks the headline / "popular" players in a match.
+export const IconStar = (p) => (<Svg fill="currentColor" stroke="none" {...p}><path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" /></Svg>);

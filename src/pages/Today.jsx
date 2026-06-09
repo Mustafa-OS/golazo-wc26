@@ -4,7 +4,8 @@ import Flag from '../components/Flag.jsx';
 import { teamShort } from '../lib/team.js';
 import { buildMatchdays } from '../lib/matchday.js';
 import { subscribeSlip } from '../lib/slipStore.js';
-import { IconLock } from '../components/Icons.jsx';
+import { popularIdSet } from '../lib/popular.js';
+import { IconLock, IconStar } from '../components/Icons.jsx';
 
 const ukTime = (iso) => new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 function relKickoff(iso) {
@@ -18,9 +19,9 @@ function relKickoff(iso) {
 }
 
 const TABS = [
-  { id: 'open', label: 'Open' },
+  { id: 'open', label: 'Play now' },
   { id: 'upcoming', label: 'Upcoming' },
-  { id: 'previous', label: 'Previous' },
+  { id: 'previous', label: 'Results' },
 ];
 
 export default function Today({ matches, pickFor, onPick, max, count, locked, uid, onOpenMatchday }) {
@@ -55,6 +56,7 @@ export default function Today({ matches, pickFor, onPick, max, count, locked, ui
   return (
     <div>
       <h1 className="mt-2 font-display text-3xl">MATCH DAYS</h1>
+      <p className="mt-1 text-sm text-mist">Tap a match day, then a game, to call your players.</p>
       <SlipBar count={count} max={max} />
 
       <div className="mt-3 grid grid-cols-3 gap-1 rounded-xl bg-panel2 p-1">
@@ -242,14 +244,10 @@ function EmptyTab({ tab }) {
 
 // --- Level 3: a match's player props ---------------------------------------
 function MatchProps({ match, onBack, pickFor, onPick, max, count, locked }) {
-  const [posFilter, setPosFilter] = useState('');
   const [teamFilter, setTeamFilter] = useState('');
   const atCap = count >= max;
 
-  const FILTERS = ['F', 'M', 'D', 'G'];
-  const FILTER_LABEL = { F: 'Forwards', M: 'Midfield', D: 'Defence', G: 'Keepers' };
   const TEAMS = [match.home, match.away];
-
   const POS_ORDER = { F: 0, M: 1, D: 2, G: 3 };
   const players = useMemo(() => {
     const byId = new Map();
@@ -270,7 +268,26 @@ function MatchProps({ match, onBack, pickFor, onPick, max, count, locked }) {
       .map(({ pl }) => pl);
   }, [match]);
 
-  const shown = players.filter((pl) => (!posFilter || pl.position === posFilter) && (!teamFilter || pl.teamCode === teamFilter));
+  // Headline players for this match (known stars first); default view for new
+  // users so they land on faces they recognise instead of a full squad list.
+  const popular = useMemo(() => popularIdSet(players), [players]);
+  const [view, setView] = useState(() => (popular.size ? 'popular' : 'all'));
+
+  const VIEW_CHIPS = [
+    { id: 'popular', label: 'Popular', star: true },
+    { id: 'all', label: 'All' },
+    { id: 'F', label: 'Forwards' },
+    { id: 'M', label: 'Midfield' },
+    { id: 'D', label: 'Defence' },
+    { id: 'G', label: 'Keepers' },
+  ];
+
+  const shown = players.filter((pl) => {
+    if (teamFilter && pl.teamCode !== teamFilter) return false;
+    if (view === 'popular') return popular.has(pl.id);
+    if (view === 'all') return true;
+    return pl.position === view;
+  });
 
   return (
     <div>
@@ -287,7 +304,11 @@ function MatchProps({ match, onBack, pickFor, onPick, max, count, locked }) {
         <SlipBar count={count} max={max} />
       )}
 
-      <div className="no-scrollbar -mx-4 mt-3 flex gap-2 overflow-x-auto px-4">
+      <p className="mt-3 text-[12px] font-semibold text-mist">
+        Tap <span className="text-more">MORE</span> or <span className="text-less">LESS</span> on a player — will they beat the number?
+      </p>
+
+      <div className="no-scrollbar -mx-4 mt-2 flex gap-2 overflow-x-auto px-4">
         {TEAMS.map((t) => (
           <button key={t.code} aria-label={`team-${t.code}`}
             onClick={() => setTeamFilter((v) => (v === t.code ? '' : t.code))}
@@ -300,18 +321,22 @@ function MatchProps({ match, onBack, pickFor, onPick, max, count, locked }) {
       </div>
 
       <div className="no-scrollbar -mx-4 mt-2 flex gap-2 overflow-x-auto px-4">
-        {FILTERS.map((f) => (
-          <button key={f} onClick={() => setPosFilter((v) => (v === f ? '' : f))}
-            className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-bold uppercase tracking-wide transition ${
-              posFilter === f ? 'bg-more text-ink' : 'border border-line bg-panel text-mist'}`}>
-            {FILTER_LABEL[f]}
+        {VIEW_CHIPS.map((c) => (
+          <button key={c.id} onClick={() => setView(c.id)}
+            className={`flex shrink-0 items-center gap-1 rounded-full px-3.5 py-1.5 text-xs font-bold uppercase tracking-wide transition ${
+              view === c.id ? 'bg-more text-ink' : 'border border-line bg-panel text-mist'}`}>
+            {c.star && <IconStar size={12} className={view === c.id ? 'text-ink' : 'text-gold'} />}
+            {c.label}
           </button>
         ))}
       </div>
 
       <div className="mt-3 space-y-2.5">
-        {shown.map((player) => (
+        {shown.length === 0 ? (
+          <p className="py-10 text-center text-sm text-mist">No players here — try another filter.</p>
+        ) : shown.map((player) => (
           <PropCard key={player.id} player={player} props={player.props}
+            popular={popular.has(player.id)}
             pickFor={pickFor} onPick={onPick} locked={locked} atCap={atCap} />
         ))}
       </div>

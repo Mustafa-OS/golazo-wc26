@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { sideProbability, pickValue } from '../lib/scoringEngine.js';
 import Flag from './Flag.jsx';
+import { IconStar } from './Icons.jsx';
 
 const POS_LABEL = { G: 'GK', D: 'DEF', M: 'MID', F: 'FWD' };
 // Readable metric labels (no cryptic abbreviations).
@@ -12,7 +13,7 @@ const METRIC_LABEL = {
 const ml = (m) => METRIC_LABEL[m] || m;
 
 // One card per PLAYER; metric chips switch the line/points; tap MORE or LESS.
-export default function PropCard({ player, props, pickFor, onPick, locked, atCap }) {
+export default function PropCard({ player, props, pickFor, onPick, locked, atCap, popular }) {
   const [metric, setMetric] = useState(props[0]?.metric);
   useEffect(() => {
     if (!props.some((p) => p.metric === metric)) setMetric(props[0]?.metric);
@@ -37,6 +38,7 @@ export default function PropCard({ player, props, pickFor, onPick, locked, atCap
           <Flag team={flagTeam} size="h-8 w-8" />
           <div className="leading-tight">
             <div className="flex items-center gap-1.5 text-sm font-bold">
+              {popular && <IconStar size={13} className="shrink-0 text-gold" />}
               {player.name}
               {pickedMetrics > 0 && (
                 <span className="rounded-full bg-more/15 px-1.5 text-[10px] font-extrabold text-more">
@@ -77,7 +79,10 @@ export default function PropCard({ player, props, pickFor, onPick, locked, atCap
         </div>
       )}
 
-      <div className="mt-3 grid grid-cols-2 gap-2">
+      <div className="mt-3 text-center text-[11px] font-semibold text-white/80">
+        More or less than <span className="text-white">{active.line}</span> {ml(active.metric).toLowerCase()}?
+      </div>
+      <div className="mt-2 grid grid-cols-2 gap-2">
         <SideButton side="MORE" pts={morePts} active={picked?.side === 'MORE'} disabled={sideDisabled} onClick={() => onPick(active, 'MORE')} />
         <SideButton side="LESS" pts={lessPts} active={picked?.side === 'LESS'} disabled={sideDisabled} onClick={() => onPick(active, 'LESS')} />
       </div>

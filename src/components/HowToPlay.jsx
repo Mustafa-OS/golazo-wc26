@@ -24,6 +24,12 @@ export default function HowToPlay({ onClose }) {
           </p>
         </div>
 
+        <p className="mt-4 rounded-2xl border border-line bg-panel2 px-4 py-3 text-center text-[13px] font-semibold leading-snug text-white/90">
+          A free World Cup predictions game — no money, just bragging rights.
+          You call whether a player gets <span className="text-more">MORE</span> or{' '}
+          <span className="text-less">LESS</span> than their line. Best slips top the Imperial board.
+        </p>
+
         <div className="mt-5 space-y-2.5">
           {STEPS.map((s, i) => (
             <div key={s.title} className="flex items-start gap-3 rounded-2xl border border-line bg-panel2 px-4 py-3">

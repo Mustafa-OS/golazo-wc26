@@ -54,6 +54,10 @@ export default function Home({ matches = [], rows = [], count = 0, max = 5, onGo
           <p className="mt-3 text-sm font-semibold text-white/90">
             Hey {user.name?.split(' ')[0] || 'there'} — the tournament’s on. Make your calls.
           </p>
+          <p className="mt-1.5 text-[12px] font-medium leading-snug text-mist">
+            Predict <span className="text-more">MORE</span> or <span className="text-less">LESS</span> on star
+            players, build a 5-pick slip, and climb the Imperial board.
+          </p>
         </div>
       </div>
 
