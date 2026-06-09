@@ -285,7 +285,7 @@ function MainApp() {
             onJoin={(code) => joinGroup(user.uid, code)}
           />
         )}
-        {tab === 'me' && <Profile rows={rows} />}
+        {tab === 'me' && <Profile rows={rows} onHowTo={() => setShowHelp(true)} />}
       </main>
 
       {slipOpen && (

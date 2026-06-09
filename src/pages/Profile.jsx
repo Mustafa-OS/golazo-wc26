@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { qrDataUrl } from '../lib/shareCard.js';
 
-export default function Profile({ rows }) {
+export default function Profile({ rows, onHowTo }) {
   const { user, signOut, mode } = useAuth();
   const [copied, setCopied] = useState(false);
   const [qr, setQr] = useState('');
@@ -70,7 +70,23 @@ export default function Profile({ rows }) {
         ))}
       </div>
 
-      <div className="mt-5 rounded-2xl border border-line bg-panel p-4">
+      <div className="mt-5 rounded-2xl border border-line bg-gradient-to-br from-grape/20 via-panel to-azure/15 p-4">
+        <div className="text-xs font-bold uppercase tracking-wide text-mist">About Golazo</div>
+        <p className="mt-2 text-sm font-medium leading-snug text-white/90">
+          Imperial’s free World Cup 2026 prediction game. Call whether players go{' '}
+          <span className="font-bold text-more">MORE</span> or{' '}
+          <span className="font-bold text-less">LESS</span> than their line, build your best 5 picks
+          each match day, and climb the leaderboard. Riskier calls pay more — wrong picks just score 0.
+        </p>
+        <button
+          onClick={() => onHowTo && onHowTo()}
+          className="mt-3 w-full rounded-xl border border-line bg-panel2 py-2.5 text-sm font-bold text-more transition active:scale-[0.98]"
+        >
+          How to play
+        </button>
+      </div>
+
+      <div className="mt-3 rounded-2xl border border-line bg-panel p-4">
         <div className="text-xs font-bold uppercase tracking-wide text-mist">How scoring works</div>
         <ul className="mt-2 space-y-1.5 text-sm text-mist">
           <li>• Rarer calls pay more — a striker brace beats a safe shot-on-target.</li>
