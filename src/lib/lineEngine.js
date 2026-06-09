@@ -11,6 +11,8 @@
 // in Node and in the browser unchanged.
 // ============================================================================
 
+import { matchupContext, playerQuality } from './strength.js';
+
 // Metrics we support. `key` must match the field we read back from the stats
 // feed when resolving (see functions/apiFootball.js -> normalisePlayerStats).
 export const METRICS = {
@@ -62,17 +64,44 @@ function toHalfLine(value) {
  * @param {string} metric   key from METRICS
  * @returns {object|null}   { metric, label, line, baseline } or null if N/A
  */
-export function buildLine(player, metric) {
+// Metrics that scale with attacking output (team strength × player quality).
+const OFFENSE = new Set(['goals', 'shotsOn', 'shots', 'assists']);
+// Keep every goals prop on a 0.5 line (== "scores at least one"); strength and
+// quality move the PAYOUT, not the threshold, so goal cards stay comparable.
+const GOALS_BASELINE_CAP = 0.9;
+const clampMul = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+/**
+ * Build the canonical line for one player + metric.
+ * @param {object} player   { id, name, position, baselines? }
+ * @param {string} metric   key from METRICS
+ * @param {object} [ctx]    matchup context { attackMult, concedeMult, savesMult,
+ *                          quality } — when present, baselines are adjusted by
+ *                          team strength + player quality (see strength.js).
+ */
+export function buildLine(player, metric, ctx) {
   const pos = player.position || 'M';
   const allowed = POSITION_METRICS[pos] || POSITION_METRICS.M;
   if (!allowed.includes(metric)) return null;
 
   // Prefer the player's own form if the feed gave us a per-90 average.
   const perPlayer = player.baselines && player.baselines[metric];
-  const baseline =
+  let baseline =
     typeof perPlayer === 'number'
       ? perPlayer
       : (POSITION_BASELINE[pos] && POSITION_BASELINE[pos][metric]) ?? 0.5;
+
+  // Adjust by matchup + quality when a match context is supplied.
+  if (ctx) {
+    if (OFFENSE.has(metric)) {
+      baseline *= clampMul((ctx.attackMult ?? 1) * (ctx.quality ?? 1), 0.5, 2.0);
+    } else if (metric === 'conceded') {
+      baseline *= (ctx.concedeMult ?? 1);
+    } else if (metric === 'saves') {
+      baseline *= (ctx.savesMult ?? 1);
+    }
+    if (metric === 'goals') baseline = Math.min(baseline, GOALS_BASELINE_CAP);
+  }
 
   return {
     metric,
@@ -87,11 +116,11 @@ export function buildLine(player, metric) {
  * Generate every sensible prop for a single player.
  * @returns {Array} list of line objects (see buildLine)
  */
-export function buildPlayerProps(player) {
+export function buildPlayerProps(player, ctx) {
   const pos = player.position || 'M';
   const metrics = POSITION_METRICS[pos] || POSITION_METRICS.M;
   return metrics
-    .map((m) => buildLine(player, m))
+    .map((m) => buildLine(player, m, ctx))
     .filter(Boolean);
 }
 
@@ -101,20 +130,30 @@ export function buildPlayerProps(player) {
  * across re-generation (important for idempotent Cloud Function writes).
  */
 export function buildMatchProps(match) {
+  const homeName = match.home && match.home.name;
+  const awayName = match.away && match.away.name;
+  const homeCtx = matchupContext(homeName, awayName);
+  const awayCtx = matchupContext(awayName, homeName);
+
   const props = [];
-  for (const player of [...(match.home.players || []), ...(match.away.players || [])]) {
-    for (const line of buildPlayerProps(player)) {
-      props.push({
-        id: `${match.id}:${player.id}:${line.metric}`,
-        matchId: match.id,
-        playerId: player.id,
-        playerName: player.name,
-        team: player.team,
-        teamCode: player.teamCode,
-        position: player.position,
-        ...line,
-      });
+  const addSide = (players, sideCtx) => {
+    for (const player of players || []) {
+      const ctx = { ...sideCtx, quality: playerQuality(player.name) };
+      for (const line of buildPlayerProps(player, ctx)) {
+        props.push({
+          id: `${match.id}:${player.id}:${line.metric}`,
+          matchId: match.id,
+          playerId: player.id,
+          playerName: player.name,
+          team: player.team,
+          teamCode: player.teamCode,
+          position: player.position,
+          ...line,
+        });
+      }
     }
-  }
+  };
+  addSide(match.home && match.home.players, homeCtx);
+  addSide(match.away && match.away.players, awayCtx);
   return props;
 }

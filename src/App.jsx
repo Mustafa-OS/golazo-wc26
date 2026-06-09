@@ -196,7 +196,7 @@ function MainApp() {
       // RULE: a full slip must span at least 2 different countries — block a 5th
       // pick that would leave every pick on the same nation.
       if (next.length >= MAX_PICKS && new Set(next.map((p) => p.teamCode)).size < 2) {
-        notify('Your slip needs at least 2 different countries.');
+        notify('Your picks need at least 2 different countries.');
         return prev;
       }
       // Freeze the points value at selection time so later baseline changes
@@ -340,7 +340,7 @@ function Header({ picks, max, onOpenSlip, onHelp, onHome }) {
           onClick={onOpenSlip}
           className="flex items-center gap-2 rounded-full border border-line bg-panel2 px-4 py-2 text-sm font-bold transition active:scale-95"
         >
-          <span>My Slip</span>
+          <span>My Picks</span>
           <span className="rounded-full bg-more px-2 py-0.5 text-xs font-extrabold text-ink">
             {picks.length}/{max}
           </span>
@@ -370,7 +370,7 @@ function EmptyToday() {
       <h2 className="font-display text-2xl">NO MATCHES YET</h2>
       <p className="mt-2 max-w-xs text-sm font-semibold text-mist">
         Today’s lines drop every morning at 08:00 once fixtures and lineups are in.
-        Check back then to build your slip.
+        Check back then to build your picks.
       </p>
     </div>
   );

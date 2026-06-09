@@ -47,6 +47,27 @@ try {
   ok('probability is in (0,1)', pMore > 0 && pMore < 1);
   ok('MORE + LESS probabilities are complementary', Math.abs(sideProbability(goalsProp, 'MORE') + sideProbability(goalsProp, 'LESS') - 1) < 1e-9);
 
+  // --- team strength + player quality drive the payout --------------------
+  const argFwd = { id: 'af', name: 'Squadplayer', position: 'F', team: 'Argentina', teamCode: 'ARG' };
+  const haiFwd = { id: 'hf', name: 'Squadplayer', position: 'F', team: 'Haiti', teamCode: 'HAI' };
+  const mm = buildMatchProps({ id: 'mm', home: { name: 'Argentina', players: [argFwd] }, away: { name: 'Haiti', players: [haiFwd] } });
+  const argGoals = mm.find((p) => p.playerId === 'af' && p.metric === 'goals');
+  const haiGoals = mm.find((p) => p.playerId === 'hf' && p.metric === 'goals');
+  ok('goals line stays 0.5 regardless of team strength', argGoals.line === 0.5 && haiGoals.line === 0.5);
+  ok('strong-team scorer has a higher goal baseline', argGoals.baseline > haiGoals.baseline);
+  ok('weak-team scorer pays MORE than a strong-team scorer', pickValue(haiGoals, 'MORE') > pickValue(argGoals, 'MORE'));
+
+  // Player quality: elite vs a squad player on the SAME (strong) team.
+  const elite = { id: 'el', name: 'Messi', position: 'F', team: 'Argentina', teamCode: 'ARG' };
+  const squad = { id: 'sq', name: 'Nobody Random', position: 'F', team: 'Argentina', teamCode: 'ARG' };
+  const qm = buildMatchProps({ id: 'qm', home: { name: 'Argentina', players: [elite, squad] }, away: { name: 'Haiti', players: [haiFwd] } });
+  const eliteGoals = qm.find((p) => p.playerId === 'el' && p.metric === 'goals');
+  const squadGoals = qm.find((p) => p.playerId === 'sq' && p.metric === 'goals');
+  ok('elite scorer is likelier than a squad team-mate', eliteGoals.baseline > squadGoals.baseline);
+  ok('elite scorer pays LESS for MORE than a squad team-mate', pickValue(eliteGoals, 'MORE') < pickValue(squadGoals, 'MORE'));
+  // A no-ctx buildLine is unchanged (default position baseline) — back-compat.
+  ok('buildLine without a match context is unadjusted', buildLine(argFwd, 'goals').baseline === buildLine(haiFwd, 'goals').baseline);
+
   // --- resolvePick ---------------------------------------------------------
   const pick = { ...goalsProp, id: 'p', playerId: 's1', matchId: 'm1', side: 'MORE', value: more };
   const played = (extra) => ({ minutes: 90, ...extra });

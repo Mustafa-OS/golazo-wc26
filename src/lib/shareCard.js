@@ -60,7 +60,7 @@ export async function slipShareBlob({ picks, potential, mode = 'normal', captain
   // mode badge
   const badge = isPower
     ? `POWER PLAY · ${powerMultiplier(picks.length)}×`
-    : (captainId ? 'CAPTAIN BOOST · 2×' : 'MY SLIP');
+    : (captainId ? 'CAPTAIN BOOST · 2×' : 'MY PICKS');
   ctx.font = '800 34px "Hanken Grotesk", system-ui, sans-serif';
   const bw = ctx.measureText(badge).width + 56;
   rr(ctx, PAD, 226, bw, 62, 31);

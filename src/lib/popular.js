@@ -110,16 +110,24 @@ export function normalizeName(s) {
     .trim();
 }
 
-/** True if a player name matches our curated star list. */
-export function isStar(name) {
+/**
+ * True if a normalised name matches any key in `keys`. Single-word keys match a
+ * whole name token; multi-word keys match as a substring.
+ */
+export function matchesAny(name, keys) {
   const n = normalizeName(name);
   if (!n) return false;
   const tokens = new Set(n.split(' '));
-  for (const key of STAR_KEYS) {
+  for (const key of keys) {
     if (key.indexOf(' ') >= 0) { if (n.includes(key)) return true; }
     else if (tokens.has(key)) return true;
   }
   return false;
+}
+
+/** True if a player name matches our curated star list. */
+export function isStar(name) {
+  return matchesAny(name, STAR_KEYS);
 }
 
 /**

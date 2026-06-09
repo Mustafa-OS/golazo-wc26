@@ -44,7 +44,7 @@ export default function LeaderboardPage({ rows, weekly = [], meUid, groups = [] 
             Points earned this week · resets Monday
           </p>
           {weekRows.length === 0 ? (
-            <EmptyBoard text="No points on the board yet this week — lock a slip to get on it." />
+            <EmptyBoard text="No points on the board yet this week — lock in your picks to get on it." />
           ) : (
             <Board sorted={weekRows} meUid={meUid} />
           )}
@@ -120,7 +120,7 @@ function GroupBoards({ groups, sorted, meUid }) {
             </div>
             {board.length === 0 ? (
               <p className="rounded-xl border border-line bg-panel px-3 py-3 text-xs font-semibold text-mist">
-                No points on the board yet — pick a slip to get {g.name} started.
+                No points on the board yet — make some picks to get {g.name} started.
               </p>
             ) : (
               <div className="space-y-2">

@@ -10,7 +10,7 @@
     "esbuild": "^0.21.5"
   },
   "scripts": {
-    "build:engines": "esbuild ../src/lib/lineEngine.js --format=cjs --outfile=lineEngine.cjs && esbuild ../src/lib/scoringEngine.js --format=cjs --outfile=scoringEngine.cjs && esbuild apiFootball.js --format=cjs --outfile=apiFootball.cjs",
+    "build:engines": "esbuild ../src/lib/lineEngine.js --bundle --platform=node --format=cjs --outfile=lineEngine.cjs && esbuild ../src/lib/scoringEngine.js --format=cjs --outfile=scoringEngine.cjs && esbuild apiFootball.js --format=cjs --outfile=apiFootball.cjs",
     "deploy": "npm run build:engines && firebase deploy --only functions"
   }
 }

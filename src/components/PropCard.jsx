@@ -42,7 +42,7 @@ export default function PropCard({ player, props, pickFor, onPick, locked, atCap
               {player.name}
               {pickedMetrics > 0 && (
                 <span className="rounded-full bg-more/15 px-1.5 text-[10px] font-extrabold text-more">
-                  {pickedMetrics} in slip
+                  Picked
                 </span>
               )}
             </div>
@@ -52,8 +52,8 @@ export default function PropCard({ player, props, pickFor, onPick, locked, atCap
           </div>
         </div>
         <div className="text-right">
-          <div className="font-display text-3xl leading-none text-white">{active.line}</div>
-          <div className="text-[10px] font-semibold uppercase text-mist">{ml(active.metric)}</div>
+          <div className="font-display text-5xl leading-none text-white">{active.line}</div>
+          <div className="mt-0.5 text-[11px] font-bold uppercase tracking-wide text-mist">{ml(active.metric)}</div>
         </div>
       </div>
 
@@ -79,8 +79,8 @@ export default function PropCard({ player, props, pickFor, onPick, locked, atCap
         </div>
       )}
 
-      <div className="mt-3 text-center text-[11px] font-semibold text-white/80">
-        More or less than <span className="text-white">{active.line}</span> {ml(active.metric).toLowerCase()}?
+      <div className="mt-3 text-center text-base font-bold text-white">
+        More or less than <span className="text-more">{active.line}</span> {ml(active.metric).toLowerCase()}?
       </div>
       <div className="mt-2 grid grid-cols-2 gap-2">
         <SideButton side="MORE" pts={morePts} active={picked?.side === 'MORE'} disabled={sideDisabled} onClick={() => onPick(active, 'MORE')} />

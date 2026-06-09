@@ -32,22 +32,22 @@ export default function PickSlip({
 
   async function shareSlip() {
     const url = window.location.origin + window.location.pathname;
-    const tag = isPower ? 'POWER PLAY' : 'My GOLAZO. slip';
+    const tag = isPower ? 'POWER PLAY' : 'My GOLAZO. picks';
     const caption = `${tag} — ${potential} pts on the line. Play: ${url}`;
     setBusyShare(true);
     try {
       const blob = await slipShareBlob({ picks, potential, mode, captainId, url });
-      const file = new File([blob], 'golazo-slip.png', { type: 'image/png' });
+      const file = new File([blob], 'golazo-picks.png', { type: 'image/png' });
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({ files: [file], text: caption, title: 'My GOLAZO. slip' });
+        await navigator.share({ files: [file], text: caption, title: 'My GOLAZO. picks' });
       } else {
         // No file-share support (most desktops) -> download the image.
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = 'golazo-slip.png';
+        a.download = 'golazo-picks.png';
         a.click();
         URL.revokeObjectURL(a.href);
-        flash('Slip image saved ✓');
+        flash('Picks image saved ✓');
       }
     } catch {
       // Last resort: copy the caption text.
@@ -64,7 +64,7 @@ export default function PickSlip({
       <div className="animate-slideup relative mx-auto w-full max-w-md rounded-t-3xl border-t border-line bg-panel px-4 pb-8 pt-3">
         <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-line" />
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-display text-2xl">YOUR SLIP</h2>
+          <h2 className="font-display text-2xl">YOUR PICKS</h2>
           <div className="flex items-center gap-2">
             {anySettled ? (
               <span className="rounded-full bg-gold/15 px-3 py-1 text-sm font-bold text-gold">RESULTS</span>
@@ -121,7 +121,7 @@ export default function PickSlip({
         {picks.length === 0 ? (
           <p className="py-10 text-center text-sm text-mist">
             No picks yet. Tap <span className="text-more">MORE</span> or{' '}
-            <span className="text-less">LESS</span> on a prop to start your slip.
+            <span className="text-less">LESS</span> on a player to start your picks.
           </p>
         ) : (
           <div className="max-h-[42vh] space-y-2 overflow-y-auto">
@@ -227,7 +227,7 @@ export default function PickSlip({
 
         {anySettled ? null : locked ? (
           <div className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-gold/40 bg-gold/10 py-3.5 font-display text-lg tracking-wide text-gold">
-            <IconLock size={18} /> SLIP LOCKED
+            <IconLock size={18} /> PICKS LOCKED
           </div>
         ) : (
           <div className="mt-3 flex gap-2">
@@ -236,7 +236,7 @@ export default function PickSlip({
               onClick={async () => { const ok = await onSave?.(); if (ok !== false) { setSaved(true); setTimeout(() => setSaved(false), 2000); } }}
               className="flex-1 rounded-2xl bg-more py-3.5 font-display text-lg tracking-wide text-ink transition active:scale-[0.98] disabled:opacity-40"
             >
-              {saved ? 'SAVED' : isPower ? 'SAVE POWER SLIP' : 'SAVE SLIP'}
+              {saved ? 'SAVED' : isPower ? 'SAVE POWER PLAY' : 'SAVE PICKS'}
             </button>
             {picks.length > 0 && (
               <button
@@ -255,7 +255,7 @@ export default function PickSlip({
             disabled={busyShare}
             className="mt-3 w-full rounded-2xl border border-line bg-panel2 py-3 text-sm font-bold text-more transition active:scale-[0.98] disabled:opacity-60"
           >
-            {busyShare ? 'Making image…' : shared || 'Share my slip'}
+            {busyShare ? 'Making image…' : shared || 'Share my picks'}
           </button>
         )}
 

@@ -56,7 +56,7 @@ export default function Home({ matches = [], rows = [], count = 0, max = 5, onGo
           </p>
           <p className="mt-1.5 text-[12px] font-medium leading-snug text-mist">
             Predict <span className="text-more">MORE</span> or <span className="text-less">LESS</span> on star
-            players, build a 5-pick slip, and climb the Imperial board.
+            players, make your 5 picks, and climb the Imperial board.
           </p>
         </div>
       </div>
@@ -73,7 +73,7 @@ export default function Home({ matches = [], rows = [], count = 0, max = 5, onGo
         onClick={onGoToday}
         className="w-full rounded-2xl bg-gradient-to-r from-more to-azure py-4 text-center font-display text-xl tracking-wide text-ink transition active:scale-[0.98]"
       >
-        {openMd ? `BUILD MATCHDAY ${openMd.n} SLIP` : 'SEE MATCH DAYS'}
+        {openMd ? `BUILD MATCHDAY ${openMd.n} PICKS` : 'SEE MATCH DAYS'}
         <span className="ml-2 rounded-full bg-ink/25 px-2 py-0.5 align-middle text-xs font-extrabold">{count}/{max}</span>
       </button>
 

@@ -1,0 +1,100 @@
+// ============================================================================
+// TEAM STRENGTH + PLAYER QUALITY
+// ----------------------------------------------------------------------------
+// Two real-world signals that make the lines (and therefore the payouts) fair:
+//
+//   1. TEAM STRENGTH  — from approximate current FIFA ranking points. A strong
+//      side is more likely to score and win, so its attackers' baselines go UP
+//      (their goal is "expected" → pays less) and a weak side's go DOWN (their
+//      goal is a longshot → pays more). Keeper "conceded" works the other way.
+//
+//   2. PLAYER QUALITY — elite/star players score more often than a squad player,
+//      so their attacking baselines get a multiplier (Messi over 0.5 is likelier
+//      → pays less than a no-name doing the same).
+//
+// Both feed the baseline in lineEngine, and the scoring engine prices the payout
+// as 1/probability — so longshots (weak team, low-quality player) pay the most.
+// Shared by frontend + Cloud Functions; dependency-light (imports popular.js).
+// ============================================================================
+
+import { matchesAny, isStar, normalizeName } from './popular.js';
+
+// Approx FIFA ranking points (mid-2025/26). Covers the WC 2026 field plus a few
+// extras used by the mock/demo. Relative order is what matters, not precision.
+const RATING = {
+  argentina: 1885, france: 1862, spain: 1855, england: 1820, brazil: 1778,
+  portugal: 1775, netherlands: 1756, belgium: 1736, italy: 1718, croatia: 1716,
+  morocco: 1700, colombia: 1690, uruguay: 1680, germany: 1666, mexico: 1655,
+  japan: 1652, switzerland: 1648, senegal: 1645, usa: 1641, iran: 1638,
+  denmark: 1640, austria: 1602, ecuador: 1571, 'south korea': 1575, sweden: 1580,
+  turkiye: 1560, norway: 1535, canada: 1531, 'ivory coast': 1530, ukraine: 1530,
+  australia: 1500, egypt: 1518, algeria: 1507, scotland: 1500, tunisia: 1500,
+  nigeria: 1500, 'bosnia herzegovina': 1490, paraguay: 1480, ghana: 1470,
+  'congo dr': 1455, 'south africa': 1445, qatar: 1438, uzbekistan: 1437,
+  'saudi arabia': 1420, iraq: 1400, panama: 1395, 'cape verde islands': 1390,
+  curacao: 1372, jordan: 1316, haiti: 1300, 'new zealand': 1245,
+};
+
+// Naming differences between feeds → our table keys.
+const ALIASES = {
+  'united states': 'usa', 'korea republic': 'south korea',
+  'czechia': 'czech republic', 'cote d ivoire': 'ivory coast', 'turkey': 'turkiye',
+  'cape verde': 'cape verde islands', 'bosnia and herzegovina': 'bosnia herzegovina',
+  'dr congo': 'congo dr', 'democratic republic of congo': 'congo dr',
+};
+
+// Czech Republic isn't in RATING above (kept the long key off the table for
+// brevity); add it via alias-to-self handling below.
+RATING['czech republic'] = 1500;
+
+const DEFAULT_RATING = 1450; // unknown nation → mid-table
+const R_MIN = 1250, R_MAX = 1900;
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+export function teamRating(name) {
+  const n = normalizeName(name);
+  return RATING[ALIASES[n] || n] ?? DEFAULT_RATING;
+}
+
+/** 0 (weakest) … 1 (strongest), normalised across the rating band. */
+export function teamStrength(name) {
+  return clamp((teamRating(name) - R_MIN) / (R_MAX - R_MIN), 0, 1);
+}
+
+/**
+ * Per-side baseline multipliers for a matchup.
+ * @param {string} ownName  the player's team
+ * @param {string} oppName  the opponent
+ */
+export function matchupContext(ownName, oppName) {
+  const own = teamStrength(ownName);
+  const opp = teamStrength(oppName);
+  const d = own - opp; // -1 (big underdog) … +1 (big favourite)
+  return {
+    // attacking output scales with how much stronger you are than the opponent
+    attackMult: clamp(1 + d * 0.7, 0.55, 1.7),
+    // a weaker team concedes more (opponent stronger → higher)
+    concedeMult: clamp(1 - d * 0.9, 0.5, 1.9),
+    // a weaker team's keeper faces more shots → more saves to make
+    savesMult: clamp(1 - d * 0.5, 0.65, 1.55),
+  };
+}
+
+// Genuine global icons — a notch above "star". Normalised keys (see popular.js).
+const ELITE_KEYS = [
+  'messi', 'ronaldo', 'mbappe', 'haaland', 'bellingham', 'vinicius', 'kane',
+  'm salah', 'mohamed salah', 'de bruyne', 'musiala', 'wirtz', 'yamal', 'rodri',
+  'foden', 'saka', 'lewandowski', 'kvaratskhelia', 'osimhen', 'son heung min',
+  'neymar', 'griezmann', 'rodrygo', 'pedri', 'lautaro martinez', 'l martinez',
+  'julian alvarez', 'vitinha', 'olmo', 'leao',
+];
+
+/**
+ * Attacking-output multiplier for a player's quality.
+ *   elite ≈ 1.5×, star ≈ 1.2×, squad player = 1×.
+ */
+export function playerQuality(name) {
+  if (matchesAny(name, ELITE_KEYS)) return 1.5;
+  if (isStar(name)) return 1.2;
+  return 1.0;
+}

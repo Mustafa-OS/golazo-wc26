@@ -4,7 +4,7 @@ const STEPS = [
   { title: 'Pick a player line', body: 'Open a match day, tap a game, then tap MORE or LESS on a player’s line (goals, shots, saves…).' },
   { title: 'Best 5 per match day', body: 'Up to 5 picks a match day — from at least two different countries, and one pick per player.' },
   { title: 'Boost it (optional)', body: 'Make one pick your Captain for 2×, or go Power Play — all picks must land for a big multiplier.' },
-  { title: 'Save — it auto-locks', body: 'Your slip saves to your account and locks automatically 30 min before the first kickoff.' },
+  { title: 'Save — it auto-locks', body: 'Your picks save to your account and lock automatically 30 min before the first kickoff.' },
   { title: 'Win points & climb', body: 'Rarer calls pay more. Wrong picks score 0 — never negative. Streaks add up to +50%. Race the Imperial board or a private group.' },
 ];
 
@@ -27,7 +27,7 @@ export default function HowToPlay({ onClose }) {
         <p className="mt-4 rounded-2xl border border-line bg-panel2 px-4 py-3 text-center text-[13px] font-semibold leading-snug text-white/90">
           A free World Cup predictions game — no money, just bragging rights.
           You call whether a player gets <span className="text-more">MORE</span> or{' '}
-          <span className="text-less">LESS</span> than their line. Best slips top the Imperial board.
+          <span className="text-less">LESS</span> than their line. Best picks top the Imperial board.
         </p>
 
         <div className="mt-5 space-y-2.5">

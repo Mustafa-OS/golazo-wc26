@@ -159,7 +159,7 @@ function PreviousDay({ md, uid, onBack }) {
       <BackHeader onBack={onBack} title={`MATCHDAY ${md.n}`} sub={`${md.label} · results`} />
       {slip?.scored != null && (
         <div className="mt-2 flex items-center justify-between rounded-xl border border-gold/40 bg-gold/10 px-3 py-2">
-          <span className="text-xs font-bold text-gold">Your slip scored</span>
+          <span className="text-xs font-bold text-gold">Your picks scored</span>
           <span className="font-display text-xl text-gold">{slip.scored} pts</span>
         </div>
       )}
@@ -308,7 +308,7 @@ function MatchProps({ match, onBack, pickFor, onPick, max, count, locked }) {
         Tap <span className="text-more">MORE</span> or <span className="text-less">LESS</span> on a player — will they beat the number?
       </p>
 
-      <div className="no-scrollbar -mx-4 mt-2 flex gap-2 overflow-x-auto px-4">
+      <div className="mt-2 flex flex-wrap gap-2">
         {TEAMS.map((t) => (
           <button key={t.code} aria-label={`team-${t.code}`}
             onClick={() => setTeamFilter((v) => (v === t.code ? '' : t.code))}
@@ -320,7 +320,7 @@ function MatchProps({ match, onBack, pickFor, onPick, max, count, locked }) {
         ))}
       </div>
 
-      <div className="no-scrollbar -mx-4 mt-2 flex gap-2 overflow-x-auto px-4">
+      <div className="mt-2 flex flex-wrap gap-2">
         {VIEW_CHIPS.map((c) => (
           <button key={c.id} onClick={() => setView(c.id)}
             className={`flex shrink-0 items-center gap-1 rounded-full px-3.5 py-1.5 text-xs font-bold uppercase tracking-wide transition ${
