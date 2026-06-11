@@ -2,6 +2,23 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // A match day's slips can't be created or edited once it has locked
+    // (lockAt = the first game's kickoff). Enforced with request.time — the
+    // trusted server clock — so it can't be bypassed by changing the device
+    // clock or writing straight to the database. Fail-open: with no lock doc
+    // for that day, picks are allowed, so a missing doc never blocks real picks.
+    function mdUnlocked(day) {
+      return !exists(/databases/$(database)/documents/matchdays/$(day))
+          || get(/databases/$(database)/documents/matchdays/$(day)).data.get('lockAt', null) == null
+          || request.time < get(/databases/$(database)/documents/matchdays/$(day)).data.lockAt;
+    }
+
+    // Match-day lock metadata (server/owner-written; rules read it via get()).
+    match /matchdays/{day} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
     // Matches + props are written ONLY by Cloud Functions; everyone can read.
     match /matches/{matchId} {
       allow read: if request.auth != null;
@@ -37,13 +54,16 @@ service cloud.firestore {
       // settled/scored/streakApplied are server-only — blocking them here stops a
       // client from writing a fake `scored` to game the weekly board.
       allow create: if request.auth.uid == request.resource.data.uid
-                    && !request.resource.data.keys().hasAny(['settled', 'scored', 'streakApplied']);
-      // Edit only while still unlocked; you may flip locked false->true, but a
-      // locked slip can never be written again, and the owner can't change.
+                    && !request.resource.data.keys().hasAny(['settled', 'scored', 'streakApplied'])
+                    && mdUnlocked(request.resource.data.day);
+      // Edit only while still unlocked AND before the match day's first kickoff;
+      // you may flip locked false->true, but a locked slip can never be written
+      // again, and the owner can't change.
       allow update: if request.auth.uid == resource.data.uid
                     && resource.data.locked == false
                     && request.resource.data.uid == resource.data.uid
-                    && !request.resource.data.keys().hasAny(['settled', 'scored', 'streakApplied']);
+                    && !request.resource.data.keys().hasAny(['settled', 'scored', 'streakApplied'])
+                    && mdUnlocked(resource.data.day);
     }
 
     // Leaderboards: read-only to clients.
