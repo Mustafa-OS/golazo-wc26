@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import Flag from '../components/Flag.jsx';
+import { inAppBrowser } from '../lib/inAppBrowser.js';
 
 // Multicolour Google "G" (logo, used on the sign-in button per Google guidelines).
 function GoogleLogo({ size = 18 }) {
@@ -31,6 +32,15 @@ const STEPS = [
 
 export default function AuthScreen() {
   const { signInGoogle, signInDemo, error, busy, mode } = useAuth();
+  const inApp = inAppBrowser();
+  const [copied, setCopied] = useState(false);
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } catch { /* clipboard blocked — they can long-press the address bar instead */ }
+  };
 
   return (
     <div className="mx-auto flex min-h-full max-w-md flex-col px-6 py-8">
@@ -54,6 +64,22 @@ export default function AuthScreen() {
 
       {/* sign in — primary CTA, above the explainer */}
       <div className="mt-5">
+        {inApp && (
+          <div className="mb-3 rounded-2xl border border-gold/50 bg-gold/10 p-4 text-left">
+            <div className="text-sm font-extrabold text-gold">Open in your browser to sign in</div>
+            <p className="mt-1.5 text-[13px] font-semibold leading-snug text-fg/90">
+              You’re in {inApp === 'in-app' ? 'an app’s' : `${inApp}’s`} in-app browser, where Google sign-in is
+              blocked. Tap the menu (<span className="font-extrabold">⋯</span> or the share icon) and choose{' '}
+              <span className="font-extrabold">“Open in Safari”</span> or <span className="font-extrabold">“Open in Chrome”</span>, then sign in there.
+            </p>
+            <button
+              onClick={copyLink}
+              className="mt-3 w-full rounded-xl bg-gold py-2.5 text-sm font-extrabold text-ink transition active:scale-[0.98]"
+            >
+              {copied ? 'Link copied — paste it in your browser' : 'Copy link'}
+            </button>
+          </div>
+        )}
         <button
           onClick={signInGoogle}
           disabled={busy}
