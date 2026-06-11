@@ -105,7 +105,7 @@ function startOfWeekISO() {
 
 async function resolveMatches(key, date, season) {
   const fixtures = await api.getFixtures(key, date, season);
-  const finished = fixtures.filter((f) => f.status === 'FT');
+  const finished = fixtures.filter((f) => ['FT', 'AET', 'PEN', 'AWD', 'WO'].includes(f.status));
   if (!finished.length) return { finished: 0, settled: 0 };
   const finishedIds = new Set(finished.map((f) => f.id));
 
@@ -152,7 +152,7 @@ async function resolveMatches(key, date, season) {
 
   // Mark finished matches for the UI (with the final score for the results view).
   const mb = db.batch();
-  for (const fx of finished) mb.set(db.doc(`matches/${fx.id}`), { settled: true, status: 'FT', score: fx.score }, { merge: true });
+  for (const fx of finished) mb.set(db.doc(`matches/${fx.id}`), { settled: true, status: fx.status, score: fx.score }, { merge: true });
   await mb.commit();
 
   return { finished: finished.length, settled: settledCount };
@@ -200,8 +200,10 @@ exports.generateDailyProps = onSchedule(
   async () => { await generateProps(API_KEY.value(), todayISO()); }
 );
 
+// Every 15 min so results, points and the match-day rollover land soon after
+// full-time (idempotent: settled slips + FT matches are skipped/merged).
 exports.resolveFinished = onSchedule(
-  { schedule: '0 * * * *', timeZone: 'Europe/London', secrets: [API_KEY] },
+  { schedule: '*/15 * * * *', timeZone: 'Europe/London', secrets: [API_KEY] },
   async () => { await resolveMatches(API_KEY.value(), todayISO()); }
 );
 

@@ -20,6 +20,11 @@ export const usToday = () => usDateKey(Date.now());
 
 const dayDiff = (a, b) => Math.round((Date.parse(b) - Date.parse(a)) / 86400e3);
 
+// A game counts as finished once the API marks it full-time (resolveFinished
+// also flips `settled`). AET/PEN/AWD/WO cover knockout + awarded results.
+const FINISHED_STATUS = new Set(['FT', 'AET', 'PEN', 'AWD', 'WO']);
+const gameFinished = (g) => g?.settled === true || FINISHED_STATUS.has(g?.status);
+
 // → [{ key, n, label, status:'previous'|'open'|'upcoming', games:[...] }] sorted.
 export function buildMatchdays(matches) {
   const byDay = new Map();
@@ -34,8 +39,12 @@ export function buildMatchdays(matches) {
     .sort((a, b) => (a[0] < b[0] ? -1 : 1))
     .map(([key, games], i) => {
       const sorted = [...games].sort((x, y) => new Date(x.kickoff) - new Date(y.kickoff));
+      // Done = every game full-time → drops to Results immediately and frees up
+      // the next locked match day. The date check is a fallback for any game the
+      // API never marks finished.
+      const allDone = sorted.every(gameFinished);
       let status;
-      if (dayDiff(today, key) < 0) status = 'previous';
+      if (allDone || dayDiff(today, key) < 0) status = 'previous';
       else if (openTaken < OPEN_COUNT) { status = 'open'; openTaken += 1; }
       else status = 'upcoming';
       return { key, n: i + 1, label: usDateLabel(sorted[0].kickoff), status, games: sorted };
