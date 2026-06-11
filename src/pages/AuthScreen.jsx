@@ -63,7 +63,7 @@ export default function AuthScreen() {
           {busy ? 'One sec…' : 'Continue with Google'}
         </button>
         <p className="mt-2.5 text-center text-[11px] font-semibold text-mist">
-          Imperial students — you’ll confirm your shortcode next to get in.
+          Free to play — sign in to start picking.
         </p>
 
         {error && (
@@ -134,7 +134,7 @@ export default function AuthScreen() {
       </div>
 
       <p className="mt-7 text-center text-[11px] font-bold uppercase tracking-[0.18em] text-mist">
-        48 nations · 104 matches · one Imperial board
+        48 nations · 104 matches · one leaderboard
       </p>
     </div>
   );

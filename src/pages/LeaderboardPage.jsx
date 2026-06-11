@@ -103,7 +103,7 @@ function GroupBoards({ groups, sorted, meUid, onLeave }) {
         <h2 className="font-display text-xl">GROUP BOARDS</h2>
         <p className="mt-2 max-w-xs text-sm font-semibold text-mist">
           Join or create a group on the <span className="text-more">Groups</span> tab to battle your
-          course, halls, or society on a private board.
+          friends on a private board.
         </p>
       </div>
     );

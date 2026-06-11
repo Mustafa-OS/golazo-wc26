@@ -2,20 +2,18 @@
 // AUTH CONTEXT
 // ----------------------------------------------------------------------------
 // Sign-in is Google-only. Flow:
-//   signed out -> "Continue with Google" -> onboarding (display name + Imperial
-//   shortcode) -> ready. Imperial status is verified by the shortcode, not the
-//   email domain (students use a personal Google account).
+//   signed out -> "Continue with Google" -> onboarding (pick a display name) ->
+//   ready. Open sign-up — anyone with a Google account can play.
 //
 //   MOCK_MODE -> localStorage stand-in (src/lib/mockAuth.js)
 //   live/emu  -> Firebase Auth (Google) + the users/{uid} Firestore doc
 //
 // status:  'loading' | 'signedOut' | 'needsOnboarding' | 'ready'
-// user:    { uid, email, name, shortcode, year, points } once onboarded
+// user:    { uid, email, name, points } once onboarded
 // ============================================================================
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { MOCK_MODE, EMULATOR_MODE, auth, db } from '../firebase.js';
-import { validateShortcode } from '../config.js';
 import * as mock from '../lib/mockAuth.js';
 
 export const MODE = MOCK_MODE ? 'mock' : EMULATOR_MODE ? 'emulator' : 'live';
@@ -37,8 +35,8 @@ function friendly(code) {
   return map[code] || 'Something went wrong. Please try again.';
 }
 
-// A live profile is "ready" only once it has BOTH a display name and a shortcode.
-const isOnboarded = (data) => !!(data && data.name && data.shortcode);
+// A profile is "ready" once it has a display name.
+const isOnboarded = (data) => !!(data && data.name);
 
 export function AuthProvider({ children }) {
   const [status, setStatus] = useState('loading');
@@ -126,14 +124,12 @@ export function AuthProvider({ children }) {
     } finally { setBusy(false); }
   }, []);
 
-  const completeOnboarding = useCallback(async ({ name, shortcode }) => {
+  const completeOnboarding = useCallback(async ({ name }) => {
     setError('');
     if (!name?.trim()) { setError('Add a display name to continue.'); return false; }
-    const v = validateShortcode(shortcode);
-    if (!v.ok) { setError(v.error); return false; }
     setBusy(true);
     try {
-      const profile = { name: name.trim(), shortcode: v.code, year: v.year, onboarded: true };
+      const profile = { name: name.trim(), onboarded: true };
       if (MOCK_MODE) {
         const u = mock.currentUser();
         const updated = mock.updateProfile(u.uid, profile);

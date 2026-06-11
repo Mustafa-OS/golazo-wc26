@@ -4,11 +4,10 @@ import { useAuth } from '../context/AuthContext.jsx';
 export default function Onboarding() {
   const { user, completeOnboarding, error, busy, signOut } = useAuth();
   const [name, setName] = useState(user?.displayName || ''); // pre-filled from Google
-  const [shortcode, setShortcode] = useState('');
 
   async function submit(e) {
     e.preventDefault();
-    await completeOnboarding({ name, shortcode });
+    await completeOnboarding({ name });
   }
 
   return (
@@ -16,7 +15,7 @@ export default function Onboarding() {
       <div className="text-center">
         <div className="font-display text-4xl tracking-wide">ALMOST IN<span className="text-more">.</span></div>
         <p className="mt-2 text-sm font-semibold text-mist">
-          Set your name and confirm you’re at Imperial.
+          Pick a display name — it’s what everyone sees on the leaderboard.
         </p>
         {user?.email && (
           <p className="mt-1 text-[11px] font-semibold text-mist">{user.email}</p>
@@ -34,22 +33,6 @@ export default function Onboarding() {
             placeholder="Your display name"
             maxLength={24}
             className="w-full rounded-xl border border-line bg-panel2 px-3.5 py-3 text-sm font-semibold outline-none placeholder:text-mist focus:border-more"
-          />
-        </div>
-
-        <div>
-          <label className="mb-1.5 block px-1 text-xs font-bold uppercase tracking-wide text-mist">
-            Imperial shortcode
-          </label>
-          <input
-            value={shortcode}
-            onChange={(e) => setShortcode(e.target.value.toUpperCase())}
-            placeholder="Imperial shortcode"
-            autoCapitalize="characters"
-            autoCorrect="off"
-            spellCheck={false}
-            maxLength={12}
-            className="w-full rounded-xl border border-line bg-panel2 px-3.5 py-3 text-sm font-bold uppercase tracking-wide outline-none placeholder:font-semibold placeholder:normal-case placeholder:tracking-normal placeholder:text-mist focus:border-more"
           />
         </div>
 

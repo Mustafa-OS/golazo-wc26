@@ -37,7 +37,7 @@ export default function GroupsPage({ groups, onCreate, onJoin }) {
     <div>
       <h1 className="mt-2 font-display text-3xl">GROUPS</h1>
       <p className="mt-1 text-sm text-mist">
-        Make a private league and battle your course / halls / society.
+        Make a private league and battle your friends.
       </p>
 
       {msg && (
