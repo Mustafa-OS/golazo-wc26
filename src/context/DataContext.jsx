@@ -28,6 +28,7 @@ export function DataProvider({ children }) {
   const [loading, setLoading] = useState(!MOCK_MODE);
   const [leaderboard, setLeaderboard] = useState(() => (MOCK_MODE ? MOCK_LEADERBOARD : []));
   const [weekly, setWeekly] = useState(() => (MOCK_MODE ? MOCK_WEEKLY : []));
+  const [userCount, setUserCount] = useState(() => (MOCK_MODE ? MOCK_LEADERBOARD.length : 0));
 
   // Leaderboards the functions roll up: all-time (`imperial`) + `weekly`.
   useEffect(() => {
@@ -35,13 +36,21 @@ export function DataProvider({ children }) {
     let unsubs = [];
     (async () => {
       const { doc, onSnapshot } = await import('firebase/firestore');
-      const sub = (id, set) =>
-        onSnapshot(
-          doc(db, 'leaderboards', id),
-          (snap) => set(snap.exists() ? snap.data().board || [] : []),
-          (err) => console.error(`leaderboard ${id} subscription error`, err)
-        );
-      unsubs = [sub('imperial', setLeaderboard), sub('weekly', setWeekly)];
+      const unsubImp = onSnapshot(
+        doc(db, 'leaderboards', 'imperial'),
+        (snap) => {
+          const d = snap.exists() ? snap.data() : {};
+          setLeaderboard(d.board || []);
+          setUserCount(d.total ?? (d.board || []).length);
+        },
+        (err) => console.error('leaderboard imperial subscription error', err)
+      );
+      const unsubWeekly = onSnapshot(
+        doc(db, 'leaderboards', 'weekly'),
+        (snap) => setWeekly(snap.exists() ? (snap.data().board || []) : []),
+        (err) => console.error('leaderboard weekly subscription error', err)
+      );
+      unsubs = [unsubImp, unsubWeekly];
     })();
     return () => unsubs.forEach((u) => u && u());
   }, []);
@@ -103,5 +112,5 @@ export function DataProvider({ children }) {
     };
   }, []);
 
-  return <DataCtx.Provider value={{ matches, loading, leaderboard, weekly }}>{children}</DataCtx.Provider>;
+  return <DataCtx.Provider value={{ matches, loading, leaderboard, weekly, userCount }}>{children}</DataCtx.Provider>;
 }

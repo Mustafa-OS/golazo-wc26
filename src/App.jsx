@@ -65,7 +65,7 @@ function Splash() {
 
 function MainApp() {
   const { user } = useAuth();
-  const { matches, loading, leaderboard, weekly } = useData();
+  const { matches, loading, leaderboard, weekly, userCount } = useData();
   const [tab, setTab] = useState('home');
   const [picks, setPicks] = useState([]); // [{ ...prop, side, value }]
   const [slipOpen, setSlipOpen] = useState(false);
@@ -278,7 +278,7 @@ function MainApp() {
               onOpenMatchday={setViewingKey}
             />
           ))}
-        {tab === 'board' && <LeaderboardPage rows={rows} weekly={weekly} meUid={user.uid} groups={groups} onLeaveGroup={(id) => leaveGroup(user.uid, id)} />}
+        {tab === 'board' && <LeaderboardPage rows={rows} weekly={weekly} meUid={user.uid} players={userCount} groups={groups} onLeaveGroup={(id) => leaveGroup(user.uid, id)} />}
         {tab === 'groups' && (
           <GroupsPage
             groups={groups}

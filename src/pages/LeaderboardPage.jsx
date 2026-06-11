@@ -13,14 +13,21 @@ const PODIUM = {
   3: { border: 'border-flame', text: 'text-flame', bt: 'border-t-flame', from: 'from-flame/10' },
 };
 
-export default function LeaderboardPage({ rows, weekly = [], meUid, groups = [], onLeaveGroup }) {
+export default function LeaderboardPage({ rows, weekly = [], meUid, players = 0, groups = [], onLeaveGroup }) {
   const [scope, setScope] = useState('imperial');
   const allTime = [...rows].sort((a, b) => b.points - a.points);
   const weekRows = [...weekly].sort((a, b) => b.points - a.points);
+  const playerCount = players || allTime.length;
 
   return (
     <div>
-      <h1 className="mt-2 font-display text-3xl">LEADERBOARD</h1>
+      <div className="mt-2 flex items-center justify-between gap-3">
+        <h1 className="font-display text-3xl">LEADERBOARD</h1>
+        <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-line bg-panel2 px-3 py-1.5 text-xs font-bold text-mist">
+          <span className="h-1.5 w-1.5 rounded-full bg-more" />
+          {playerCount} player{playerCount === 1 ? '' : 's'}
+        </span>
+      </div>
 
       <div className="mt-3 flex gap-2">
         {TABS.map((s) => (
@@ -46,19 +53,45 @@ export default function LeaderboardPage({ rows, weekly = [], meUid, groups = [],
           {weekRows.length === 0 ? (
             <EmptyBoard text="No points on the board yet this week — lock in your picks to get on it." />
           ) : (
-            <Board sorted={weekRows} meUid={meUid} />
+            <>
+              <YourRank sorted={weekRows} meUid={meUid} label="Your week" />
+              <Board sorted={weekRows} meUid={meUid} />
+            </>
           )}
         </>
       ) : (
-        <Board sorted={allTime} meUid={meUid} />
+        <>
+          <YourRank sorted={allTime} meUid={meUid} label="Your position" />
+          <Board sorted={allTime} meUid={meUid} />
+        </>
       )}
+    </div>
+  );
+}
+
+// Pinned "where am I" card — shows the signed-in user's rank even when they're
+// outside the top 10 below.
+function YourRank({ sorted, meUid, label = 'Your position' }) {
+  const i = sorted.findIndex((u) => u.uid === meUid);
+  if (i === -1) return null;
+  const me = sorted[i];
+  return (
+    <div className="mt-4 flex items-center justify-between rounded-2xl border-2 border-more bg-more/10 px-4 py-3">
+      <div className="flex items-center gap-3">
+        <span className="w-12 shrink-0 text-center font-display text-2xl text-more">#{i + 1}</span>
+        <div className="leading-tight">
+          <div className="text-[10px] font-bold uppercase tracking-wide text-mist">{label}</div>
+          <div className="text-sm font-bold text-fg">{me.name || 'You'}</div>
+        </div>
+      </div>
+      <span className="font-display text-2xl text-gold">{me.points} pts</span>
     </div>
   );
 }
 
 function Board({ sorted, meUid }) {
   const top3 = sorted.slice(0, 3);
-  const rest = sorted.slice(3);
+  const rest = sorted.slice(3, 10); // top 10 only
   return (
     <>
       {/* podium */}

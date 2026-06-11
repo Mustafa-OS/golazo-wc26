@@ -164,7 +164,11 @@ async function recompute() {
   const allTime = users.docs.map((d, i) => ({
     rank: i + 1, uid: d.id, name: d.get('name'), year: d.get('year'), points: d.get('points') || 0,
   }));
-  await db.doc('leaderboards/imperial').set({ board: allTime, updatedAt: Date.now() });
+  // Total registered players (for the userbase counter). Falls back to the
+  // board length if the count() aggregation isn't available.
+  let total = allTime.length;
+  try { total = (await db.collection('users').count().get()).data().count; } catch (e) { /* keep fallback */ }
+  await db.doc('leaderboards/imperial').set({ board: allTime, total, updatedAt: Date.now() });
 
   // Weekly board: sum settled slip scores since Monday, grouped by user.
   const weekStart = startOfWeekISO();
@@ -201,8 +205,10 @@ exports.resolveFinished = onSchedule(
   async () => { await resolveMatches(API_KEY.value(), todayISO()); }
 );
 
+// Every 5 minutes so new signups + fresh points show on the board quickly
+// (the board is a cached snapshot; this keeps it close to real-time).
 exports.recomputeLeaderboard = onSchedule(
-  { schedule: '15 * * * *', timeZone: 'Europe/London' },
+  { schedule: '*/5 * * * *', timeZone: 'Europe/London' },
   async () => { await recompute(); }
 );
 
