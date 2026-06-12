@@ -104,8 +104,14 @@ function startOfWeekISO() {
 }
 
 async function resolveMatches(key, date, season) {
-  const fixtures = await api.getFixtures(key, date, season);
-  const finished = fixtures.filter((f) => ['FT', 'AET', 'PEN', 'AWD', 'WO'].includes(f.status));
+  // Pull the WHOLE schedule (with current statuses), not just `date`, so a match
+  // day that finished on an earlier UTC day still settles (slips need ALL of a
+  // day's games in one finished set). Bounded to the last few days so we don't
+  // rescan the entire tournament every run.
+  const fixtures = await api.getFixtures(key, undefined, season);
+  const recent = Date.now() - 3 * 86400e3;
+  const finished = fixtures.filter((f) =>
+    ['FT', 'AET', 'PEN', 'AWD', 'WO'].includes(f.status) && new Date(f.kickoff).getTime() >= recent);
   if (!finished.length) return { finished: 0, settled: 0 };
   const finishedIds = new Set(finished.map((f) => f.id));
 
