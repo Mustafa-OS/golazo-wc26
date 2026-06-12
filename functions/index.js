@@ -25,6 +25,10 @@ const { FieldValue } = require('firebase-admin/firestore');
 
 admin.initializeApp();
 const db = admin.firestore();
+// Onboarding no longer sets `year`, and optional pick fields (e.g. captain) can
+// be undefined — omit undefined values instead of throwing on write. (This was
+// silently breaking both leaderboard recompute and slip settlement.)
+db.settings({ ignoreUndefinedProperties: true });
 
 const API_KEY = defineSecret('API_FOOTBALL_KEY');
 
