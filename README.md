@@ -1,13 +1,11 @@
-# Golazo — Imperial World Cup 2026 Props
+# Golazo — Imperial World Cup 2026 Predition Game
 
-A PrizePicks-style player-props game for the 2026 World Cup, built to spread across
-Imperial College. Browse a match, tap **MORE** or **LESS** on app-set lines, lock
+A new Prediction game built for the 2026 World Cup
+Browse a match, tap **MORE** or **LESS** on app-set lines, lock
 your best **5 picks** a day (or go all-in with a **Power Play** parlay / a **2× Captain**),
-climb the all-Imperial leaderboard or a private group. **No betting** — just points
-and bragging rights.
+climb the all-Imperial leaderboard or a private group. 
 
-> Kickoff is **11 June 2026**. The app is **deployed live** on Firebase; the only
-> thing left is upgrading API-Football to Pro so season-2026 data unlocks (see §4).
+> Kickoff is **11 June 2026**. The app is **deployed live** on Firebase
 
 **▶ Live app:** https://golazo-wc.web.app  ·  **Mock demo:** https://mustafa-os.github.io/golazo-wc26/
 
