@@ -65,7 +65,7 @@ function Splash() {
 
 function MainApp() {
   const { user } = useAuth();
-  const { matches, loading, leaderboard, weekly, userCount } = useData();
+  const { matches, loading, leaderboard, weekly, userCount, matchdayLocks } = useData();
   const [tab, setTab] = useState('home');
   const [picks, setPicks] = useState([]); // [{ ...prop, side, value }]
   const [slipOpen, setSlipOpen] = useState(false);
@@ -129,9 +129,10 @@ function MainApp() {
   // Slip auto-locks 30 min before the match day's earliest kickoff.
   const lockAt = useMemo(() => {
     if (!activeMdKey) return null;
+    if (matchdayLocks[activeMdKey]) return matchdayLocks[activeMdKey]; // server-set override
     const games = matches.filter((m) => usDateKey(m.kickoff) === activeMdKey);
     return games.length ? matchdayKickoff(games) - LOCK_LEAD_MS : null;
-  }, [matches, activeMdKey]);
+  }, [matches, activeMdKey, matchdayLocks]);
   const [, tick] = useState(0);
   useEffect(() => {
     if (lockAt == null) return;

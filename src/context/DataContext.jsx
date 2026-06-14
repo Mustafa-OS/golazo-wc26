@@ -29,13 +29,25 @@ export function DataProvider({ children }) {
   const [leaderboard, setLeaderboard] = useState(() => (MOCK_MODE ? MOCK_LEADERBOARD : []));
   const [weekly, setWeekly] = useState(() => (MOCK_MODE ? MOCK_WEEKLY : []));
   const [userCount, setUserCount] = useState(() => (MOCK_MODE ? MOCK_LEADERBOARD.length : 0));
+  // Optional per-match-day lock overrides (ms). When set, the app uses this as
+  // the lock time instead of the computed "first kickoff − lead".
+  const [matchdayLocks, setMatchdayLocks] = useState({});
 
   // Leaderboards the functions roll up: all-time (`imperial`) + `weekly`.
   useEffect(() => {
     if (MOCK_MODE) return;
     let unsubs = [];
     (async () => {
-      const { doc, onSnapshot } = await import('firebase/firestore');
+      const { doc, collection, onSnapshot } = await import('firebase/firestore');
+      const unsubMd = onSnapshot(
+        collection(db, 'matchdays'),
+        (snap) => {
+          const m = {};
+          snap.docs.forEach((d) => { const t = d.data().lockAt; if (t) m[d.id] = t.toMillis ? t.toMillis() : Date.parse(t); });
+          setMatchdayLocks(m);
+        },
+        (err) => console.error('matchdays subscription error', err)
+      );
       const unsubImp = onSnapshot(
         doc(db, 'leaderboards', 'imperial'),
         (snap) => {
@@ -50,7 +62,7 @@ export function DataProvider({ children }) {
         (snap) => setWeekly(snap.exists() ? (snap.data().board || []) : []),
         (err) => console.error('leaderboard weekly subscription error', err)
       );
-      unsubs = [unsubImp, unsubWeekly];
+      unsubs = [unsubMd, unsubImp, unsubWeekly];
     })();
     return () => unsubs.forEach((u) => u && u());
   }, []);
@@ -112,5 +124,5 @@ export function DataProvider({ children }) {
     };
   }, []);
 
-  return <DataCtx.Provider value={{ matches, loading, leaderboard, weekly, userCount }}>{children}</DataCtx.Provider>;
+  return <DataCtx.Provider value={{ matches, loading, leaderboard, weekly, userCount, matchdayLocks }}>{children}</DataCtx.Provider>;
 }

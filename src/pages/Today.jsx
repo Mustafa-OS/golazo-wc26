@@ -51,11 +51,17 @@ export default function Today({ matches, pickFor, onPick, max, count, locked, ui
     onOpenMatchday?.(selectedDay?.status === 'open' ? selectedDay.key : null);
   }, [selectedDay, onOpenMatchday]);
 
-  // Level 3 — props for a chosen game in an OPEN match day.
-  if (selectedMatch && selectedDay?.status === 'open') {
+  // A game closes at its OWN kickoff, so a game that's already started (e.g. a
+  // stray early kickoff that lands in an otherwise-open match day) can't be picked.
+  const playableGames = selectedDay
+    ? selectedDay.games.filter((g) => Date.parse(g.kickoff) > Date.now())
+    : [];
+
+  // Level 3 — props for a chosen game in an OPEN match day (not already started).
+  if (selectedMatch && selectedDay?.status === 'open' && Date.parse(selectedMatch.kickoff) > Date.now()) {
     return (
       <MatchProps key={selectedMatch.id} match={selectedMatch} onBack={() => setMatchId(null)}
-        games={selectedDay.games} onSwitchGame={setMatchId}
+        games={playableGames} onSwitchGame={setMatchId}
         pickFor={pickFor} onPick={onPick} max={max} count={count} locked={locked} />
     );
   }
@@ -63,7 +69,7 @@ export default function Today({ matches, pickFor, onPick, max, count, locked, ui
   if (selectedDay) {
     return selectedDay.status === 'previous'
       ? <PreviousDay md={selectedDay} uid={uid} onBack={() => setDayKey(null)} />
-      : <GamesList md={selectedDay} onBack={() => setDayKey(null)} onPick={setMatchId} count={count} max={max} />;
+      : <GamesList md={{ ...selectedDay, games: playableGames }} onBack={() => setDayKey(null)} onPick={setMatchId} count={count} max={max} />;
   }
   // Level 1 — match-day list with the Open/Upcoming/Previous toggle.
   const list = matchdays.filter((d) => d.status === tab);
