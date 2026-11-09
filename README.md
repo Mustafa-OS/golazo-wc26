@@ -1,28 +1,28 @@
-# Golazo — Imperial World Cup 2026 prediction game
+# ⚽ Golazo: Imperial's World Cup 2026 prediction game
 
-A PrizePicks-style player-props game built for Imperial College students: call **MORE** or **LESS** on player stat lines, lock your best **5 picks** a day (or go all-in with a **Power Play** parlay / a **2× Captain**), and climb the all-Imperial leaderboard or a private group. No betting — points and bragging rights only.
+**Call MORE or LESS on World Cup player stats, lock in your best five picks a day, and climb the all-Imperial leaderboard. No betting, just points and bragging rights.**
 
-**▶ Live app:** https://golazo-wc.web.app · **Mock demo:** https://mustafa-os.github.io/golazo-wc26/
+**[▶ Play the live app](https://golazo-wc.web.app)** · **[Try the demo](https://mustafa-os.github.io/golazo-wc26/)** (no sign-in) · React · Firebase · Cloud Functions · API-Football
 
-![Golazo — call MORE or LESS on World Cup player props](public/og.png)
+![Golazo: call MORE or LESS on World Cup player props](public/og.png)
 
----
+## At a glance
 
-## 1. Run it right now (30 seconds)
+- 🎯 **Fair, probability-based scoring.** A pick's points are roughly `1 / chance it lands`, modelled with a Poisson distribution, so a striker's brace pays up to 100 and a likely shot on target pays ~5–8.
+- 🏗️ **Built to scale for free.** Players never call the football API. Scheduled cloud jobs fetch data once and cache it in Firestore, so **1,000 players cost the same API calls as 10**.
+- 🔒 **Secure by design.** Points are only ever awarded by the server. Firestore rules stop anyone editing their score or changing a pick after kickoff.
+- ✅ **One source of truth.** The line and scoring engines are shared by the app (to preview points) and the server (to award them), so they can't disagree. 45 automated tests run before every deploy.
+- 🎓 **Imperial-only.** Students sign in with Google and are verified by their college shortcode.
 
-```bash
-npm install
-npm run dev
-```
+## How to play
 
-Open the local URL. With no `.env`, the app runs in **MOCK_MODE** on sample
-fixtures (England v Croatia, Argentina v Algeria) so you can see and feel the whole
-game — sign-in, the match rail, props, the More/Less mechanic, the slip, leaderboard,
-groups — before any backend exists. There's a one-tap **"Try the demo"** button too.
+1. Each day, every player gets **over/under lines** on stats that suit their position: goals and shots for strikers, saves for keepers.
+2. Call **MORE** or **LESS** on up to **5 picks**. Go big with a **Power Play** (all must land) or make one pick a **2× Captain**.
+3. Picks lock at kickoff. When the matches finish, the server settles every slip and updates the leaderboards.
+4. Compete on the all-Imperial board or start a **private group** with friends.
 
----
-
-## 2. How the game works
+<details>
+<summary><b>How lines and scoring work</b></summary>
 
 **Lines** (`src/lib/lineEngine.js`) — every player gets over/under lines on the
 metrics that suit their position (strikers: goals/shots; keepers: saves; etc.).
@@ -41,13 +41,9 @@ Both engines are plain dependency-free JS, imported by **both** the frontend (to
 preview points) and the Cloud Functions (to award them) — so they can never disagree.
 `npm test` runs 45 assertions over them.
 
----
+</details>
 
-## 3. The architecture that makes it scale
-
-**Users never call the football API.** Scheduled Cloud Functions hit API-Football on
-a schedule and cache everything in Firestore; every student reads from Firestore
-(huge free tier). 10 players or 1,000 — API usage is identical.
+## How it's built
 
 ```
                  (scheduled)
@@ -60,16 +56,17 @@ a schedule and cache everything in Firestore; every student reads from Firestore
                                                   all users read  ◀─────┘
 ```
 
-- `generateDailyProps` (daily, 08:00 London): full schedule + squads → write props for every match inside the 5-day "open" window
-- `resolveFinished` (every 15 min): finished matches → player stats → settle each slip as a whole once **all** its matches are done (required for parlays), award points idempotently
-- `recomputeLeaderboard` (every 5 min): roll user totals into cached all-time and weekly boards
-- `joinGroup` / `leaveGroup` (callables): group membership changes go through the server, since direct group writes are blocked by the Firestore rules
+| Job | When | What it does |
+|---|---|---|
+| `generateDailyProps` | daily, 08:00 London | Writes props for every match in the next 5 days |
+| `resolveFinished` | every 15 min | Settles slips once **all** their matches are done, awarding points exactly once |
+| `recomputeLeaderboard` | every 5 min | Rolls totals into cached all-time and weekly boards |
+| `joinGroup` / `leaveGroup` | on request | Group changes go through the server, since direct writes are blocked |
 
-Sign-in is Google-only; Imperial status is verified at onboarding by student
-shortcode (`src/config.js`) rather than email domain, since Imperial students use
-personal Google accounts.
+The same UI runs in three modes: **mock** (sample data, no backend), **emulator** (local Firebase) and **live**.
 
-### Three run modes (`src/firebase.js`)
+<details>
+<summary><b>The three run modes</b></summary>
 
 | Mode | Trigger | Backend |
 |------|---------|---------|
@@ -80,9 +77,18 @@ personal Google accounts.
 Every page is backend-agnostic via `AuthContext` / `DataContext` and the
 `slipStore` / `groupStore` modules — the same UI runs on mock, emulator, or live.
 
----
+</details>
 
-## 4. Going live (Firebase + API-Football)
+## Run it
+
+```bash
+npm install
+npm run dev     # runs in MOCK mode on sample fixtures: no accounts or keys needed
+npm test        # 45 engine tests
+```
+
+<details>
+<summary><b>Going live: Firebase, API-Football and deployment</b></summary>
 
 ### a) Firebase *(unlocks Auth, live data, slips, leaderboards, groups)*
 1. Create a project at <https://console.firebase.google.com>.
@@ -118,9 +124,7 @@ firebase deploy --only hosting        # Firebase Hosting (firebase.json -> dist,
 A MOCK_MODE demo also auto-deploys to **GitHub Pages** on every push to `main`
 (`.github/workflows/deploy.yml` — CI runs the engine tests and build first).
 
----
-
-## 5. Local development against the emulator (no cloud needed)
+### Local development against the emulator
 
 Test the full live code path — real Auth, Firestore reads/writes, security rules,
 and the group callables — entirely offline (needs Java for the Firestore emulator):
@@ -135,7 +139,7 @@ npm run seed
 npm run dev:emulator        # http://localhost:5174  (VITE_FB_EMULATOR=1)
 ```
 
-## 6. Tests
+### Tests
 
 ```bash
 npm test     # engine unit tests (lineEngine + scoringEngine), 45 assertions
@@ -145,9 +149,10 @@ The same tests run in CI before every GitHub Pages deploy. During development th
 build was also verified headlessly: full mock UI flow, the live emulator UI flow,
 a security-rules suite, and the groups/callable suite.
 
----
+</details>
 
-## File map
+<details>
+<summary><b>File map</b></summary>
 
 ```
 src/
@@ -173,14 +178,12 @@ firebase.json             rules + indexes + functions + hosting + emulator confi
 scripts/                  seed.mjs (emulator seed), test-engines.mjs (npm test)
 ```
 
----
+</details>
 
-## Project context
+## About
 
-Personal project, built in June 2026 in the run-up to and during the 2026 FIFA World
-Cup, for Imperial College students to play along with the tournament. Stack: React 18 +
-Vite + Tailwind CSS, Firebase (Auth, Firestore, Cloud Functions, Hosting), API-Football.
+Personal project, built in June 2026 in the run-up to and during the FIFA World Cup, so Imperial College students could play along with the tournament.
 
 ---
 
-Built by Mustafa Suleman — MEng Design Engineering, Imperial College London · [LinkedIn](https://www.linkedin.com/in/mustafaosuleman/)
+<sub>Built by <b>Mustafa Suleman</b>, MEng Design Engineering, Imperial College London · <a href="https://github.com/Mustafa-OS">More projects</a> · <a href="https://www.linkedin.com/in/mustafaosuleman/">LinkedIn</a></sub>
