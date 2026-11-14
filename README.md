@@ -1,44 +1,44 @@
-# ⚽ Golazo: Imperial's World Cup 2026 prediction game
+# Golazo
 
-**Call MORE or LESS on World Cup player stats, lock in your best five picks a day, and climb the all-Imperial leaderboard. No betting, just points and bragging rights.**
+A World Cup 2026 prediction game for Imperial students. You call More or Less on player stats, lock in your best five picks each day and try to climb the all-Imperial leaderboard. There's no betting, just points and bragging rights.
 
-**[▶ Play the live app](https://golazo-wc.web.app)** · **[Try the demo](https://mustafa-os.github.io/golazo-wc26/)** (no sign-in) · React · Firebase · Cloud Functions · API-Football
+**[Play the live app](https://golazo-wc.web.app)** · **[Try the demo](https://mustafa-os.github.io/golazo-wc26/)** (no sign-in) · React · Firebase · Cloud Functions · API-Football
 
 ![Golazo: call MORE or LESS on World Cup player props](public/og.png)
 
-## At a glance
+A few details I'm pleased with:
 
-- 🎯 **Fair, probability-based scoring.** A pick's points are roughly `1 / chance it lands`, modelled with a Poisson distribution, so a striker's brace pays up to 100 and a likely shot on target pays ~5–8.
-- 🏗️ **Built to scale for free.** Players never call the football API. Scheduled cloud jobs fetch data once and cache it in Firestore, so **1,000 players cost the same API calls as 10**.
-- 🔒 **Secure by design.** Points are only ever awarded by the server. Firestore rules stop anyone editing their score or changing a pick after kickoff.
-- ✅ **One source of truth.** The line and scoring engines are shared by the app (to preview points) and the server (to award them), so they can't disagree. 45 automated tests run before every deploy.
-- 🎓 **Imperial-only.** Students sign in with Google and are verified by their college shortcode.
+- Points depend on how unlikely a pick is. Each one is worth roughly `1 / chance it lands`, using a Poisson model, so a striker's brace pays up to 100 and a likely shot on target pays 5–8.
+- Players never call the football API themselves. Scheduled cloud jobs fetch the data once and cache it in Firestore, so 1,000 players cost the same in API calls as 10.
+- Only the server can award points, and Firestore rules stop anyone editing their score or changing a pick after kickoff.
+- The app and the server share the same line and scoring code, so the points you're shown are the points you get. 45 automated tests run before every deploy.
+- It's Imperial-only: students sign in with Google and are checked against their college shortcode.
 
 ## How to play
 
-1. Each day, every player gets **over/under lines** on stats that suit their position: goals and shots for strikers, saves for keepers.
-2. Call **MORE** or **LESS** on up to **5 picks**. Go big with a **Power Play** (all must land) or make one pick a **2× Captain**.
+1. Each day, every player gets over/under lines on stats that suit their position: goals and shots for strikers, saves for keepers.
+2. Call More or Less on up to 5 picks. You can go for a Power Play (all of them have to land) or make one pick a 2× Captain.
 3. Picks lock at kickoff. When the matches finish, the server settles every slip and updates the leaderboards.
-4. Compete on the all-Imperial board or start a **private group** with friends.
+4. Compete on the all-Imperial board or start a private group with friends.
 
 <details>
 <summary><b>How lines and scoring work</b></summary>
 
-**Lines** (`src/lib/lineEngine.js`) — every player gets over/under lines on the
+**Lines** (`src/lib/lineEngine.js`): every player gets over/under lines on the
 metrics that suit their position (strikers: goals/shots; keepers: saves; etc.).
-Lines are half-numbers (0.5, 1.5, 2.5…) so every prop resolves cleanly. No odds feed
-needed — lines come from position baselines, upgraded to a player's own form when the
+Lines are half-numbers (0.5, 1.5, 2.5…) so every prop resolves cleanly. There's no odds
+feed; lines come from position baselines, upgraded to a player's own form when the
 stats feed provides it.
 
-**Scoring** (`src/lib/scoringEngine.js`) — risk-weighted. A pick's value ≈ `1 / P(it lands)`,
+**Scoring** (`src/lib/scoringEngine.js`) is risk-weighted. A pick's value ≈ `1 / P(it lands)`,
 where the probability is modelled with a Poisson tail on the metric's baseline. A safe
 shot-on-target pays ~5–8 pts; a striker brace or a keeper scoring pays up to 100. Wrong
-picks score **0** (never negative), and a picked player who doesn't play is **void** —
+picks score **0** (never negative), and a picked player who doesn't play is **void**,
 the standard DFS "Did Not Play" rule. The engine also supports a daily-streak
 multiplier of up to +50%.
 
 Both engines are plain dependency-free JS, imported by **both** the frontend (to
-preview points) and the Cloud Functions (to award them) — so they can never disagree.
+preview points) and the Cloud Functions (to award them), so they can never disagree.
 `npm test` runs 45 assertions over them.
 
 </details>
@@ -75,7 +75,7 @@ The same UI runs in three modes: **mock** (sample data, no backend), **emulator*
 | **LIVE** | `VITE_FB_API_KEY` set | your real Firebase project |
 
 Every page is backend-agnostic via `AuthContext` / `DataContext` and the
-`slipStore` / `groupStore` modules — the same UI runs on mock, emulator, or live.
+`slipStore` / `groupStore` modules, so the same UI runs on mock, emulator or live.
 
 </details>
 
@@ -104,7 +104,7 @@ npm test        # 45 engine tests
 1. Sign up at <https://www.api-football.com>. The free tier is enough to wire
    everything up; live in-tournament resolution needs a paid tier with live data
    and player stats.
-2. Store the key as a Functions secret — never in client code:
+2. Store the key as a Functions secret, never in client code:
    ```bash
    firebase functions:secrets:set API_FOOTBALL_KEY
    ```
@@ -122,12 +122,12 @@ npm run build
 firebase deploy --only hosting        # Firebase Hosting (firebase.json -> dist, SPA rewrite)
 ```
 A MOCK_MODE demo also auto-deploys to **GitHub Pages** on every push to `main`
-(`.github/workflows/deploy.yml` — CI runs the engine tests and build first).
+(`.github/workflows/deploy.yml`; CI runs the engine tests and build first).
 
 ### Local development against the emulator
 
-Test the full live code path — real Auth, Firestore reads/writes, security rules,
-and the group callables — entirely offline (needs Java for the Firestore emulator):
+Test the full live code path (real Auth, Firestore reads/writes, security rules
+and the group callables) entirely offline (needs Java for the Firestore emulator):
 
 ```bash
 # terminal 1 — emulators (auth, firestore, functions)
